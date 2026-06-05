@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Configuratore e Flasher per ESP32 Remote ID">
+    <title>ESP32 Drone ID - Configuratore & Flasher</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.4.0/bundle.js"></script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="nav-brand">
+                <div class="brand-icon">🚁</div>
+                <div class="brand-text">
+                    <h1>ESP32 Drone ID</h1>
+                    <span class="brand-subtitle">Remote ID Configurator</span>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="#configurator" class="nav-link">Configuratore</a>
+                <a href="#flasher" class="nav-link">Flasher</a>
+                <a href="#compiler" class="nav-link">Compiler</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="badge-dot"></span>
+                    Conforme FAA & EU Regulation
+                </div>
+                <h1 class="hero-title">
+                    Configuratore & Flasher<br>
+                    <span class="gradient-text">ESP32 Remote ID</span>
+                </h1>
+                <p class="hero-description">
+                    Soluzione professionale per configurare e flashare moduli ESP32 per Remote ID.
+                    Supporta OpenDroneID (EU/US) con interfaccia intuitiva e sicura.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container main-container">
+        
+        <!-- Configuration Section -->
+        <section id="configurator" class="section">
+            <div class="section-header">
+                <div class="section-icon">⚙️</div>
+                <div>
+                    <h2 class="section-title">Configurazione Remote ID</h2>
+                    <p class="section-subtitle">Configura i parametri del tuo modulo ESP32</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="openid">
+                        📡 OpenDroneID
+                    </button>
+                </div>
+
+                <!-- OpenDroneID Tab Content -->
+                <div id="openid-content" class="tab-content active">
+                    <div class="info-banner info">
+                        <div>Standard internazionale EU/US per identificazione droni</div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="uasId" class="form-label">UAS ID <span class="label-badge">max 20</span></label>
+                            <input type="text" id="uasId" class="form-input" placeholder="es. DRONE-12345" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="operatorId" class="form-label">Operator ID <span class="label-badge">max 20</span></label>
+                            <input type="text" id="operatorId" class="form-input" placeholder="es. OP-ITALY-001" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="serialNumber" class="form-label">Serial Number</label>
+                            <input type="text" id="serialNumber" class="form-input" placeholder="es. SN-2024-0001">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="manufacturerName" class="form-label">Manufacturer Name</label>
+                            <input type="text" id="manufacturerName" class="form-input" placeholder="es. DJI, Auterion">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="modelName" class="form-label">Model Name</label>
+                            <input type="text" id="modelName" class="form-input" placeholder="es. Mavic 3, H520">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label class="form-label">Protocolli di Trasmissione</label>
+                            <div class="checkbox-grid">
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="ble" checked>
+                                    <label for="ble" style="margin: 0;">Bluetooth LE</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="wifiBeacon" checked>
+                                    <label for="wifiBeacon" style="margin: 0;">WiFi Beacon</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="checkbox" id="wifiNan">
+                                    <label for="wifiNan" style="margin: 0;">WiFi NAN</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card-actions">
+                    <button class="btn btn-secondary" onclick="clearConfig()">
+                        🗑️ Reset
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadConfig()">
+                        📂 Carica
+                    </button>
+                    <button class="btn btn-primary" onclick="saveConfig()">
+                        💾 Salva
+                    </button>
+                </div>
+
+                <!-- Config Preview -->
+                <div id="configPreview" class="config-preview" style="display: none;">
+                    <div class="preview-header">
+                        <strong>Anteprima:</strong>
+                    </div>
+                    <pre id="configPreviewContent"></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flasher Section -->
+        <section id="flasher" class="section">
+            <div class="section-header">
+                <div class="section-icon">🔧</div>
+                <div>
+                    <h2 class="section-title">Flashing Firmware</h2>
+                    <p class="section-subtitle">Flash del firmware sul modulo ESP32</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="info-banner warning">
+                    <div>⚠️ Assicurati che l'ESP32 sia collegato via USB prima di continuare</div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="portSelect" class="form-label">Porta Seriale</label>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="portSelect" class="form-select" style="flex: 1;">
+                                <option value="">-- Seleziona porta --</option>
+                            </select>
+                            <button class="btn btn-secondary" onclick="refreshPorts()">🔄</button>
+                        </div>
+                        <div class="device-info" id="deviceInfo" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="baudRate" class="form-label">Baud Rate</label>
+                        <select id="baudRate" class="form-select">
+                            <option value="921600" selected>921600 (Consigliato)</option>
+                            <option value="460800">460800</option>
+                            <option value="230400">230400</option>
+                            <option value="115200">115200</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="firmwareFile" class="form-label">Firmware Binario (.bin)</label>
+                        <input type="file" id="firmwareFile" accept=".bin" class="form-input">
+                        <div class="form-hint">Seleziona il file firmware compilato</div>
+                        <div id="fileName" style="margin-top: 10px; font-style: italic; color: var(--text-muted);">Nessun file selezionato</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="flashAddress" class="form-label">Indirizzo Flash</label>
+                        <input type="text" id="flashAddress" class="form-input" value="0x10000" placeholder="Es: 0x10000">
+                        <div class="form-hint">Tipicamente 0x10000 per app, 0x1000 per bootloader</div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="eraseFlash" checked>
+                            Cancella Flash Prima (consigliato)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn btn-success" id="connectBtn" onclick="connectDevice()">
+                        📡 Connetti ESP32
+                    </button>
+                    <button class="btn btn-primary" id="flashBtn" onclick="flashFirmware()" disabled>
+                        ⚡ Flash Firmware
+                    </button>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-header">
+                        <span id="progressLabel">Flashing...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill">0%</div>
+                    </div>
+                </div>
+
+                <!-- Status Message -->
+                <div id="statusMessage" class="status-message"></div>
+
+                <!-- Log Container -->
+                <div id="logContainer" class="log-container">
+                    <div class="log-header">
+                        <strong>Log</strong>
+                        <button class="log-clear" onclick="clearLogs()">Cancella</button>
+                    </div>
+                    <div id="logContent" class="log-content"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Compiler Section -->
+        <section id="compiler" class="section">
+            <div class="section-header">
+                <div class="section-icon">🔨</div>
+                <div>
+                    <h2 class="section-title">Compilation Helper</h2>
+                    <p class="section-subtitle">Guide per compilare il firmware</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="info-banner info">
+                    <div>Comandi utili per compilare il firmware</div>
+                </div>
+
+                <!-- Compiler Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="arduino">
+                        📦 Arduino IDE
+                    </button>
+                    <button class="tab-btn" data-tab="platformio">
+                        ⚡ PlatformIO
+                    </button>
+                    <button class="tab-btn" data-tab="idf">
+                        🛠️ ESP-IDF
+                    </button>
+                </div>
+
+                <!-- Arduino Tab -->
+                <div id="arduino-content" class="tab-content active">
+                    <h3 class="compiler-title">📦 Arduino IDE</h3>
+                    <div class="compiler-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>Apri il file .ino</strong>
+                                <p>Seleziona il file desiderato dal progetto</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Esporta il binario</strong>
+                                <p>Sketch → Export Compiled Binary</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Recupera il file</strong>
+                                <p>Troverai il .bin nella cartella build</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PlatformIO Tab -->
+                <div id="platformio-content" class="tab-content">
+                    <h3 class="compiler-title">⚡ PlatformIO</h3>
+                    <div class="compiler-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>Compila il progetto</strong>
+                                <p>Esegui il comando build</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Attendi il completamento</strong>
+                                <p>Il processo richiede qualche minuto</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Recupera il binario</strong>
+                                <p>Dalla cartella .pio/build</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Comando</span>
+                            <button class="code-copy" onclick="copyCode(this, 'pio run -t firmware')">📋</button>
+                        </div>
+                        <pre><code>pio run -t firmware</code></pre>
+                    </div>
+                </div>
+
+                <!-- ESP-IDF Tab -->
+                <div id="idf-content" class="tab-content">
+                    <h3 class="compiler-title">🛠️ ESP-IDF</h3>
+                    <div class="compiler-steps">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>Configura il progetto</strong>
+                                <p>idf.py menuconfig (opzionale)</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Compila</strong>
+                                <p>Esegui il comando build</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Recupera il binario</strong>
+                                <p>Dalla cartella build</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Comando Build</span>
+                            <button class="code-copy" onclick="copyCode(this, 'idf.py build')">📋</button>
+                        </div>
+                        <pre><code>idf.py build</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Hardware Support Section -->
+        <section class="section">
+            <div class="section-header">
+                <div class="section-icon">💻</div>
+                <div>
+                    <h2 class="section-title">Hardware Supportato</h2>
+                    <p class="section-subtitle">Board ESP32 compatibili</p>
+                </div>
+            </div>
+
+            <div class="hardware-grid">
+                <div class="hardware-card">
+                    <div class="hardware-icon">📟</div>
+                    <h3>ESP32-S3</h3>
+                    <p>Dev board ufficiale con chip S3</p>
+                </div>
+                <div class="hardware-card">
+                    <div class="hardware-icon">📱</div>
+                    <h3>ESP32-C3</h3>
+                    <p>Board compatta RISC-V</p>
+                </div>
+                <div class="hardware-card">
+                    <div class="hardware-icon">🔷</div>
+                    <h3>Bluemark DB200</h3>
+                    <p>Moduli professionali</p>
+                </div>
+                <div class="hardware-card">
+                    <div class="hardware-icon">⭐</div>
+                    <h3>Holybro Remote ID</h3>
+                    <p>Certificato commerciale</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About</h3>
+                    <p>Sistema di Remote ID per droni basato su ESP32 e OpenDroneID</p>
+                </div>
+                <div class="footer-section">
+                    <h3>Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="https://github.com/opendroneid/opendroneid-core-c" target="_blank">OpenDroneID</a></li>
+                        <li><a href="https://docs.espressif.com" target="_blank">ESP32 Docs</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>License</h3>
+                    <p>GNU GPLv2+</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ESP-Drone-ID Project</p>
+                <p>Made with ❤️ by the community</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

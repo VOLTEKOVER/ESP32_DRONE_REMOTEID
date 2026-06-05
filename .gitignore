@@ -1,0 +1,139 @@
+# ==================== MACOS ====================
+.DS_Store
+.AppleDouble
+.LSOverride
+.directory
+
+# ==================== TEMPORARY FILES ====================
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# ==================== BUILD ARTIFACTS ====================
+build/
+**/build/
+dist/
+*.o
+*.a
+*.out
+*.exe
+
+# ==================== ESP-IDF SPECIFIC ====================
+# Build outputs
+*.bin
+*.elf
+*.map
+*.bootloader
+*.partition-table
+
+# Configuration files
+sdkconfig
+sdkconfig.old
+sdkconfig.rename
+
+# IDF dependencies
+managed_components/
+.espressif/
+components/.idf/
+**/components/.idf/
+
+# IDF flash/monitor
+flasher_args.json
+flash_project_args.json
+esptool.py
+esp_idf_tools.py
+
+# ==================== CMAKE ====================
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+
+# ==================== PYTHON ====================
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
+*$py.class
+__pycache__/
+*.egg-info/
+*.egg
+.Python
+venv/
+.venv/
+env/
+ENV/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ==================== NODE & WEB TOOLS ====================
+node_modules/
+package-lock.json
+yarn.lock
+.npm
+dist/
+build/
+*.bundle.js
+
+# ==================== IDE & EDITORS ====================
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/.RCOVA
+
+# Language servers
+.clangd/
+.ccls-cache/
+compile_commands.json
+
+# JetBrains IDEs
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+
+# User-specific
+*.user
+*.workspace
+*.suo
+*.sln.docstates
+
+# ==================== SYSTEM FILES ====================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.Spotlight-V100
+.Trashes
+
+# ==================== MISC ====================
+.DS_Store
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# Documentation generated
+docs/_build/
+site/
+
+# ==================== PROJECT SPECIFIC ====================
+# Skip sensitive config files
+config.local.json
+
+# Don't commit compiled examples
+firmware/examples/**/build/
+firmware/ESP32_DRONE_ID/build/
+firmware/id_open/build/
+
+# Skip VSCode workspace settings (keep only repo settings)
+.vscode/*.json
+!.vscode/settings.json

@@ -1,0 +1,23 @@
+{
+  "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf",
+  "idf.projectPath": "${workspaceFolder}/firmware/ESP32_DRONE_ID",
+  "idf.pythonPath": "C:\\esp\\v6.0.1\\esp-idf\\tools\\python_env\\idf5.2_py3.11_env\\Scripts\\python.exe",
+  "C_Cpp.intelliSenseEngine": "default",
+  "[cpp]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "[c]": {
+    "editor.defaultFormatter": "ms-vscode.cpptools"
+  },
+  "files.exclude": {
+    "**/build": true,
+    "**/sdkconfig": true,
+    "**/.clangd": true,
+    "**/__pycache__": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/managed_components": true,
+    "**/node_modules": true
+  }
+}

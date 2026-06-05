@@ -1,0 +1,15 @@
+CompileFlags:
+  Remove: [-f*, -m*]
+  Add:
+    - -I${IDF_PATH}/components/esp_common/include
+    - -I${IDF_PATH}/components/freertos/include
+    - -I${IDF_PATH}/components/esp_wifi/include
+    - -I${IDF_PATH}/components/nvs_flash/include
+    - -I${IDF_PATH}/components/esp_event/include
+    - -std=c11
+
+InlayHints:
+  Enabled: true
+
+Compile:
+  CDB: build/compile_commands.json

@@ -1,2 +1,40 @@
-# Auto detect text files and perform LF normalization
+# ==================== TEXT FILES ====================
+# Auto detect text files and normalize to LF
 * text=auto
+
+# ==================== SOURCE CODE ====================
+*.c text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.cmake text eol=lf
+*.txt text eol=lf
+CMakeLists.txt text eol=lf
+
+# ==================== BINARY FILES ====================
+*.bin binary
+*.elf binary
+*.o binary
+*.a binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# ==================== DOCUMENTATION ====================
+*.md text eol=lf
+*.rst text eol=lf
+*.pdf binary
+
+# ==================== SCRIPTS ====================
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
