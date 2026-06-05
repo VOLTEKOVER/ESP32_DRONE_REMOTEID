@@ -1,6 +1,14 @@
 # ESP32 Drone ID
 
-A modern, production-ready electronic ID system for unmanned aerial vehicles (UAVs) based on ESP32 microcontroller. This project provides remote identification capabilities compatible with international aviation regulations.
+Sistema di identificazione remota per droni (Remote ID) basato su **ESP32** e **OpenDroneID**, conforme ai standard internazionali EU/US. 
+
+**Progetto in riscrittura con ESP-IDF** per:
+- Migliore performance e stabilità
+- Compatibilità universale con tutti i flight controller
+- Configurazione grafica via interfaccia web
+- Flashing firmware diretto dal browser
+
+Il sistema trasmette l'identità del drone via Bluetooth, WiFi Beacon e NAN, consentendo il rilevamento remoto da dispositivi mobili e stazioni di controllo.
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-green.svg)
@@ -8,15 +16,21 @@ A modern, production-ready electronic ID system for unmanned aerial vehicles (UA
 
 ## 🎯 Features
 
-- **Multiple ID Standards Support**
-  - OpenDroneID (EU/US compatible)
-  - French WiFi UAV ID (id_france)
+- **OpenDroneID Support**
+  - Full EU/US compatible implementation
+  - Multi-region regulatory support
   - Extensible architecture for additional standards
 
 - **Multi-Protocol Broadcasting**
   - Bluetooth Low Energy (BLE) 4.0
   - WiFi Beacon
   - WiFi Neighbor Awareness Networking (NAN)
+
+- **Web-Based Configuration Tool**
+  - Graphical GUI for easy ID setup
+  - Real-time firmware flashing via USB
+  - No external tools needed (Chrome/Edge compatible)
+  - Configuration save/load support
 
 - **Hardware Optimized**
   - Runs on affordable ESP32 dev boards
@@ -55,7 +69,7 @@ A modern, production-ready electronic ID system for unmanned aerial vehicles (UA
    # Using Arduino IDE or Platform.io
    ```
 
-## 📦 Project Modules
+## 📦 Project Structure
 
 ### id_open
 Complete OpenDroneID implementation wrapper for ESP32.
@@ -65,37 +79,19 @@ Complete OpenDroneID implementation wrapper for ESP32.
 - WiFi Beacon
 - WiFi NAN
 
-**Compatibility:** Opendroneid release 2.0+
+**Compatibility:** OpenDroneID release 2.0+
 
 **Note:** Known ESP32 limitation - some devices may experience reboots when both WiFi and Bluetooth are enabled simultaneously. If this occurs, use one protocol at a time.
 
-### id_france
-French regulatory-compliant WiFi UAV electronic ID.
+## 🛠️ Web Flasher & Configuration Tool
 
-**Status:** Compatible with Gendarmerie Nationale detection systems
+Use `web_flasher.html` for a complete graphical interface to:
+- Configure drone IDs and parameters
+- Flash firmware directly from your browser
+- Monitor flashing progress
+- Save/load configurations
 
-**Details:**
-- Works with `recepteur_balise.ino` receiver implementations
-- 4-byte offset calibration from official python scripts
-- Requires real-world testing validation
-
-### id_scanner
-Real-time drone ID scanner and receiver module for monitoring remote ID signals.
-
-## ⚙️ ESP-IDF Migration (In Progress)
-
-This project is being upgraded to **ESP-IDF** framework with the following improvements:
-
-- **Graphical Configuration Tool** - Set drone IDs, registration info, and transmission parameters through an intuitive UI
-- **Better Performance** - Direct hardware access and optimization
-- **Enhanced Security** - Improved tamper resistance and authentication
-- **Professional Standards** - Production-ready firmware
-
-### Planned Features
-- Web-based configuration interface
-- Over-The-Air (OTA) updates
-- Persistent configuration storage
-- Multi-region regulatory support
+**See [WEB_FLASHER_README.md](WEB_FLASHER_README.md) for detailed instructions.**
 
 ## ⚠️ Regulatory Compliance Notice
 
