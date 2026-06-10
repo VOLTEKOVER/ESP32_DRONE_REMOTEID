@@ -12,7 +12,17 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#fafaf
 .hdr .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#000}
 .hdr .brand h1{font-size:1.15em;font-weight:600;letter-spacing:-.3px}
 .hdr .brand span{font-size:.55em;color:#999;font-weight:400;margin-left:6px}
-.hdr .badge{background:#eee;color:#555;padding:4px 12px;border-radius:12px;font-size:.76em;border:1px solid #ddd}
+.hdr .badge{background:#eee;color:#555;padding:4px 12px;border-radius:12px;font-size:.76em;border:1px solid #ddd;display:flex;align-items:center;gap:6px}
+.health-dot{width:8px;height:8px;border-radius:50%;display:inline-block;transition:background .3s}
+.health-dot.ok{background:#2e7d32;box-shadow:0 0 6px rgba(46,125,50,.4);animation:pulse 2s infinite}
+.health-dot.warn{background:#f57f17}
+.health-dot.err{background:#c62828}
+@keyframes pulse{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
+.hdr-actions{display:flex;align-items:center;gap:6px}
+.btn-save-all{background:#222;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.76em;font-weight:500;letter-spacing:.3px;transition:background .2s;white-space:nowrap}
+.btn-save-all:hover{background:#444}
+.btn-save-all.loading{opacity:.6;pointer-events:none}
+@media(max-width:600px){.hdr-actions .btn-save-all{font-size:.7em;padding:5px 10px}}
 .row{display:flex;gap:20px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
 .card{background:#fff;border-radius:12px;padding:24px;flex:1;min-width:340px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .2s}
 .card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
@@ -23,6 +33,8 @@ input,select{width:100%;padding:9px 12px;border:1px solid #d0d0d0;border-radius:
 input:focus,select:focus{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
 input.error,select.error{border-color:#c62828;box-shadow:0 0 0 3px rgba(198,40,40,.1)}
 .hint{font-size:.72em;color:#999;margin:3px 0 0}
+.errmsg{font-size:.72em;color:#c62828;margin:2px 0 0;display:none}
+input.error+.errmsg,select.error+.errmsg{display:block}
 .btn{background:#222;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%;font-size:.88em;font-weight:500;margin-top:16px;transition:background .2s,transform .1s,opacity .2s;letter-spacing:.3px}
 .btn:hover{background:#444}
 .btn:active{transform:scale(.98)}
@@ -114,8 +126,11 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <h1>ESP Remote ID <span style="color:#f57f17;font-size:.7em;font-weight:700">[BETA]</span> <span>v1.0.0</span></h1>
 </a>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<div class="badge" id="status-badge">&#x26a1; Connecting...</div>
+<div class="badge" id="status-badge"><span class="health-dot" id="health-dot"></span> Connecting...</div>
+<div class="hdr-actions">
+<button class="btn-save-all" id="btn-save-all" onclick="saveAll()">&#x1f4be; Save All</button>
 <a href="https://github.com/valeriocomo/ESP32_DRONE_ID" target="_blank" style="color:#888;font-size:.8em;text-decoration:none">GitHub</a>
+</div>
 </div>
 </div>
 
@@ -304,6 +319,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <button class="btn" type="submit">Save System</button>
 </form>
 <button class="btn-danger" onclick="showModal('reset')">&#x21bb; Factory Reset <span class="tag tag-warning">Warning</span></button>
+<button class="btn-sm" onclick="fetch('/api/restart',{method:'POST'}).then(r=>showMsg('Device restarting...'))" style="margin-top:6px;width:100%">&#x1f504; Restart Device</button>
 </div>
 
 <!-- STATUS -->
@@ -450,6 +466,63 @@ $('toggle-pass').onclick=function(){
   else{p.type='password';this.textContent='Show Password'}
 }
 
+var rules={
+  uas_id:{required:true,maxlen:20,msg:'Required, max 20 chars'},
+  op_id:{maxlen:20,msg:'Max 20 chars'},
+  uas_id2:{maxlen:20,msg:'Max 20 chars'},
+  wifi_ssid:{required:true,maxlen:20,msg:'Required, max 20 chars'},
+  wifi_pass:{maxlen:20,msg:'Max 20 chars'},
+  wifi_pwr:{min:2,max:20,step:.5,msg:'Must be 2–20 dBm'},
+  wifi_bcn:{min:0,max:5,step:.1,msg:'Must be 0–5 Hz'},
+  wifi_nan:{min:0,max:5,step:.1,msg:'Must be 0–5 Hz'},
+  bt4_rate:{min:0,max:5,step:.1,msg:'Must be 0–5 Hz'},
+  bt4_pwr:{min:-27,max:18,msg:'Must be -27–18 dBm'},
+  bt5_rate:{min:0,max:5,step:.1,msg:'Must be 0–5 Hz'},
+  bt5_pwr:{min:-27,max:18,msg:'Must be -27–18 dBm'},
+  mav_sysid:{min:0,max:254,msg:'Must be 0–254'}
+}
+
+function setError(el,msg){
+  el.classList.add('error')
+  var err=el.parentNode.querySelector('.errmsg')
+  if(!err){err=document.createElement('span');err.className='errmsg';el.parentNode.insertBefore(err,el.nextSibling)}
+  err.textContent=msg;err.style.display='block'
+}
+
+function clearError(el){
+  el.classList.remove('error')
+  var err=el.parentNode.querySelector('.errmsg')
+  if(err) err.style.display='none'
+}
+
+function validateField(id){
+  var el=$(id),r=rules[id]
+  if(!r) return true
+  var val=el.value.trim()
+  if(r.required&&!val){setError(el,r.msg);return false}
+  if(r.maxlen&&val.length>r.maxlen){setError(el,r.msg);return false}
+  if(r.min!==undefined){var n=parseFloat(val);if(isNaN(n)||n<r.min||n>r.max){setError(el,r.msg);return false}}
+  clearError(el);return true
+}
+
+function validateForm(formId){
+  var fields={f1:['uas_id','op_id','uas_id2'],f2:['wifi_pwr','wifi_bcn','wifi_nan','bt4_rate','bt4_pwr','bt5_rate','bt5_pwr'],f3:['wifi_ssid','wifi_pass','mav_sysid'],f4:[]}
+  var ids=fields[formId]||[],ok=true
+  ids.forEach(function(id){if(!validateField(id))ok=false})
+  if(formId==='f2'&&!$('tx_wifi_bcn').checked&&!$('tx_ble4').checked){showMsg('At least one transmission mode must be enabled (WiFi Beacon or BLE 4.0)',1);ok=false}
+  if(formId==='f4'){for(var i=1;i<=5;i++){var pk=$('pubkey'+i);if(pk.value.trim()&&!/^PUBLIC_KEYV1:/i.test(pk.value.trim())){setError(pk,'Should start with PUBLIC_KEYV1:');ok=false}}}
+  return ok
+}
+
+document.querySelectorAll('input,select').forEach(function(el){
+  if(rules[el.id]){
+    el.addEventListener('input',function(){clearError(el)})
+    el.addEventListener('change',function(){clearError(el)})
+    el.addEventListener('blur',function(){validateField(el.id)})
+  }
+})
+for(var i=1;i<=5;i++){(function(id){var el=$(id);el.addEventListener('blur',function(){var v=el.value.trim();if(v&&!/^PUBLIC_KEYV1:/i.test(v)){setError(el,'Should start with PUBLIC_KEYV1:')}else{clearError(el)}});el.addEventListener('input',function(){clearError(el)})})('pubkey'+i)}
+
 function getCfg(){
 fetch('/api/config').then(r=>r.json()).then(c=>{
 $('uas_id').value=c.uas_id||''
@@ -535,6 +608,7 @@ if(btn){btn.classList.remove('loading');btn.disabled=false}
 
 function saveForm(e){
 var btn=e.target.querySelector('.btn');
+if(!validateForm(e.target.id)){return}
 var c = collectForm();
 if(c.lock_level===2 || c.options&1){
 showModal('danger');
@@ -545,7 +619,19 @@ doSave(btn);
 }
 
 getCfg()
-;['f1','f2','f3','f4'].forEach(function(id){$(id).onsubmit=function(e){e.preventDefault();saveForm(e)}})
+;['f1','f2','f3','f4'].forEach(function(id){var f=$(id);f.onsubmit=function(e){e.preventDefault();saveForm(e)};f.querySelectorAll('input,select').forEach(function(el){el.addEventListener('keydown',function(e){if(e.ctrlKey&&e.key==='Enter'){f.querySelector('.btn').click()}})})})
+
+function saveAll(){
+  var ok=['f1','f2','f3','f4'].every(function(id){return validateForm(id)})
+  if(!ok){return}
+  var btn=$('btn-save-all');
+  btn.classList.add('loading');
+  var c=collectForm();
+  fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(c)})
+  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()})
+  .then(j=>{showMsg('All settings saved');btn.classList.remove('loading')})
+  .catch(e=>{showMsg('Error: '+e.message,1);btn.classList.remove('loading')})
+}
 
 function otaUpdate(){
 var f=$('fwfile').files[0]
@@ -571,28 +657,45 @@ r.onerror=function(){showMsg('Failed to read file',1);btn.classList.remove('load
 r.readAsArrayBuffer(f)
 }
 
+var lastStatusTime=0
+var timeoutWarningShown=false
 setInterval(function(){
-fetch('/api/status').then(r=>r.json()).then(s=>{
-var h=''
-h+='<div class="status-grid">'
-h+='<div class="sg-label">Protocol</div><div class="sg-val">'+['Unknown','MAVLink','MSP','NMEA','None'][s.protocol]+'</div>'
-h+='<div class="sg-label">GPS</div><div class="sg-val">'+(s.gps_valid?'<span style="color:#2e7d32">&#x2705; OK</span>':'<span style="color:#c62828">&#x274c; No fix</span>')+'</div>'
-h+='<div class="sg-label">Latitude</div><div class="sg-val">'+s.lat.toFixed(6)+'</div>'
-h+='<div class="sg-label">Longitude</div><div class="sg-val">'+s.lon.toFixed(6)+'</div>'
-h+='<div class="sg-label">Altitude</div><div class="sg-val">'+s.alt.toFixed(1)+' m</div>'
-h+='<div class="sg-label">Speed</div><div class="sg-val">'+s.speed.toFixed(1)+' m/s</div>'
-h+='<div class="sg-label">Heading</div><div class="sg-val">'+s.heading+'&deg;</div>'
-h+='<div class="sg-label">Satellites</div><div class="sg-val">'+s.satellites+'</div>'
-h+='<div class="sg-label">Fix Type</div><div class="sg-val">'+s.fix_type+'</div>'
-h+='<div class="sg-full"><strong>Transmission Counters</strong></div>'
-h+='<div class="sg-label">Tx Total</div><div class="sg-val">'+s.tx_total+'</div>'
-h+='<div class="sg-label">WiFi Beacon</div><div class="sg-val">'+s.tx_wifi_bcn+'</div>'
-h+='<div class="sg-label">BLE 4.0</div><div class="sg-val">'+s.tx_ble4+'</div>'
-h+='<div class="sg-label">BLE 5.0</div><div class="sg-val">'+(s.tx_ble5||0)+'</div>'
-h+='</div>'
-$('status').innerHTML=h
-$('status-badge').innerHTML='&#x26a1; '+['Unknown','MAVLink','MSP','NMEA','No FC'][s.protocol]
-}).catch(function(){$('status').textContent='Waiting for connection...';$('status-badge').innerHTML='&#x26a1; Disconnected'})
+        fetch('/api/status').then(r=>r.json()).then(s=>{
+          lastStatusTime=Date.now()
+          timeoutWarningShown=false
+          var h=''
+          h+='<div class="status-grid">'
+          h+='<div class="sg-label">Firmware</div><div class="sg-val">'+(s.fw_version||'v1.0.0-beta')+'</div>'
+          h+='<div class="sg-label">Protocol</div><div class="sg-val">'+['Unknown','MAVLink','MSP','NMEA','None'][s.protocol]+'</div>'
+          h+='<div class="sg-label">GPS</div><div class="sg-val">'+(s.gps_valid?'<span style="color:#2e7d32">&#x2705; OK</span>':'<span style="color:#c62828">&#x274c; No fix</span>')+'</div>'
+          h+='<div class="sg-label">Latitude</div><div class="sg-val">'+(s.lat?s.lat.toFixed(6):'-')+'</div>'
+          h+='<div class="sg-label">Longitude</div><div class="sg-val">'+(s.lon?s.lon.toFixed(6):'-')+'</div>'
+          h+='<div class="sg-label">Altitude</div><div class="sg-val">'+(s.alt?s.alt.toFixed(1):'-')+' m</div>'
+          h+='<div class="sg-label">Speed</div><div class="sg-val">'+(s.speed?s.speed.toFixed(1):'-')+' m/s</div>'
+          h+='<div class="sg-label">Heading</div><div class="sg-val">'+(s.heading?s.heading+'&deg;':'-')+'</div>'
+          h+='<div class="sg-label">Satellites</div><div class="sg-val">'+(s.satellites||'-')+'</div>'
+          h+='<div class="sg-label">Fix Type</div><div class="sg-val">'+(s.fix_type||'-')+'</div>'
+          h+='<div class="sg-full"><strong>Transmission Counters</strong></div>'
+          h+='<div class="sg-label">Tx Total</div><div class="sg-val">'+s.tx_total+'</div>'
+          h+='<div class="sg-label">WiFi Beacon</div><div class="sg-val">'+s.tx_wifi_bcn+'</div>'
+          h+='<div class="sg-label">BLE 4.0</div><div class="sg-val">'+s.tx_ble4+'</div>'
+          h+='<div class="sg-label">BLE 5.0</div><div class="sg-val">'+(s.tx_ble5||0)+'</div>'
+          h+='</div>'
+          $('status').innerHTML=h
+          var proto=s.protocol!==undefined?['Unknown','MAVLink','MSP','NMEA','No FC'][s.protocol]:'Disconnected'
+          var dot=$('health-dot')
+          if(proto==='No FC'){dot.className='health-dot warn'}else if(proto==='Disconnected'){dot.className='health-dot err'}else{dot.className='health-dot ok'}
+          $('status-badge').innerHTML='<span class="health-dot '+dot.className.split(' ')[1]+'"></span> '+proto
+          }).catch(function(){
+            $('status').textContent='Waiting for connection...'
+            var dot=$('health-dot')
+            dot.className='health-dot err'
+            $('status-badge').innerHTML='<span class="health-dot err"></span> Disconnected'
+          })
+          if(Date.now()-lastStatusTime>15000&&!timeoutWarningShown){
+            timeoutWarningShown=true
+            showMsg('Connection timeout — check that the device is powered on and you are connected to its WiFi',1)
+          }
 },2000)
 </script>
 </body>

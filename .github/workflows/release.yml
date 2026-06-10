@@ -29,7 +29,6 @@ jobs:
         run: |
           . /opt/esp/idf/export.sh > /dev/null 2>&1
           git config --global --add safe.directory "$(pwd)" > /dev/null 2>&1
-          idf.py add-dependency "mdns^*"
           idf.py set-target ${{ matrix.target }}
           echo "CONFIG_PARTITION_TABLE_CUSTOM=y" >> sdkconfig
           echo "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions.csv\"" >> sdkconfig

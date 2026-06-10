@@ -79,7 +79,16 @@ footer{text-align:center;padding:20px 0;border-top:1px solid #eee;color:#aaa;fon
 footer a{color:#888;text-decoration:none}
 footer a:hover{color:#222;text-decoration:underline}
 footer .sep{color:#ddd;margin:0 6px}
-</style>
+#btn-top{position:fixed;bottom:28px;right:28px;width:42px;height:42px;border-radius:50%;background:#222;color:#fff;border:none;cursor:pointer;font-size:1.1em;opacity:0;pointer-events:none;transition:opacity .3s,transform .2s;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+#btn-top.show{opacity:1;pointer-events:auto}
+#btn-top:hover{transform:scale(1.08)}
+.guide-search{margin-bottom:14px;position:relative}
+.guide-search input{width:100%;padding:10px 14px 10px 36px;border:1px solid #e0e0e0;border-radius:7px;font-size:.85em;outline:0;background:#fafafa;transition:border .2s}
+.guide-search input:focus{border-color:#222;background:#fff}
+.guide-search .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#bbb;font-size:.85em}
+.guide-section.hidden{display:none}
+.copy-btn{float:right;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;padding:2px 10px;font-size:.75em;cursor:pointer;color:#666;transition:background .2s}
+.copy-btn:hover{background:#e0e0e0}</style>
 </head>
 <body>
 
@@ -160,6 +169,10 @@ footer .sep{color:#ddd;margin:0 6px}
 
 <div class="guide-col" id="guide">
 <h2>&#x1f4d6; Complete Guide</h2>
+<div class="guide-search">
+<span class="search-icon">&#x1f50d;</span>
+<input type="text" id="guide-search" placeholder="Search guide sections..." oninput="filterGuide(this.value)">
+</div>
 
 <!-- 1. INTRODUCTION -->
 <div class="guide-section open">
@@ -1130,6 +1143,8 @@ git push -u origin my-feature-branch</pre>
 </div> <!-- end main-grid -->
 </div> <!-- end wrap -->
 
+<button id="btn-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top">&#x2191;</button>
+
 <footer>
 ESP Remote ID [BETA] v1.0.0
 <span class="sep">|</span>
@@ -1141,8 +1156,36 @@ ESP Remote ID [BETA] v1.0.0
 </footer>
 
 <script>
+// Open first section
 var first = document.querySelector('.guide-section');
 if (first) first.classList.add('open');
+
+// Back to top button
+var btn = document.getElementById('btn-top');
+window.onscroll = function(){btn.classList.toggle('show', window.scrollY > 400)};
+
+// Search guide sections
+function filterGuide(val){
+  var q = val.toLowerCase().trim();
+  document.querySelectorAll('.guide-section').forEach(function(s){
+    var text = s.textContent.toLowerCase();
+    s.classList.toggle('hidden', q && text.indexOf(q) === -1);
+  });
+}
+
+// Copy code blocks
+document.querySelectorAll('.gs-body pre').forEach(function(pre){
+  var btn = document.createElement('button');
+  btn.className = 'copy-btn';
+  btn.textContent = 'Copy';
+  btn.onclick = function(){
+    navigator.clipboard.writeText(pre.textContent).then(function(){
+      btn.textContent = 'Copied!';
+      setTimeout(function(){btn.textContent = 'Copy'}, 2000);
+    });
+  };
+  pre.parentNode.insertBefore(btn, pre);
+});
 </script>
 
 </body>
