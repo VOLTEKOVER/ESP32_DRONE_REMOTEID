@@ -25,7 +25,6 @@ idf_component_register(
         freertos
         esp_http_server
         driver
-        mdns
     EMBED_TXTFILES
         "webui/config.html"
 )
