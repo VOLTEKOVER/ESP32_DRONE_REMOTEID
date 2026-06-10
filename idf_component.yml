@@ -1,4 +1,4 @@
-version: "1.0"
+version: "1.0.0-beta"
 description: "ESP32 Remote ID Scanner - OpenDroneID WiFi Beacon Scanner"
 url: "https://github.com/VOLTEKOVER/ESP32_DRONE_ID"
 documentation: "README.md"

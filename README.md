@@ -1,4 +1,4 @@
-# ESP Remote ID
+# ESP Remote ID [BETA]
 
 Universal **ASTM F3411-22a / ASD-STAN prEN 4709-002** Open DroneID transmitter for ESP32.
 Reads GPS data from any flight controller (MAVLink, MSP, NMEA) and broadcasts via **WiFi Beacon** and **BLE 4.0/5.0**.
