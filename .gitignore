@@ -22,15 +22,15 @@ dist/
 *.exe
 
 # ==================== ESP-IDF SPECIFIC ====================
-# Build outputs
+# Build outputs (except tracked firmware binaries)
 *.bin
+!docs/firmware/**/*.bin
 *.elf
 *.map
 *.bootloader
 *.partition-table
 
-# Configuration files
-sdkconfig
+# Configuration files (optional build artifacts)
 sdkconfig.old
 sdkconfig.rename
 

@@ -6,23 +6,27 @@
 <title>ESP Remote ID — Configuration</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#fff;color:#222;padding:20px}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#fafafa;color:#222;padding:20px}
 .logo-svg{width:38px;height:38px;flex-shrink:0}
-.hdr{background:#f5f5f5;border-radius:12px;margin:0 auto 20px;max-width:1100px;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border:1px solid #e0e0e0}
+.hdr{background:#fff;border-radius:12px;margin:0 auto 20px;max-width:1100px;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .hdr .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:#000}
 .hdr .brand h1{font-size:1.15em;font-weight:600;letter-spacing:-.3px}
 .hdr .brand span{font-size:.55em;color:#999;font-weight:400;margin-left:6px}
 .hdr .badge{background:#eee;color:#555;padding:4px 12px;border-radius:12px;font-size:.76em;border:1px solid #ddd}
 .row{display:flex;gap:20px;max-width:1100px;margin:0 auto;flex-wrap:wrap}
-.card{background:#fff;border-radius:12px;padding:24px;flex:1;min-width:340px;border:1px solid #e0e0e0;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.card{background:#fff;border-radius:12px;padding:24px;flex:1;min-width:340px;border:1px solid #e0e0e0;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .2s}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .card h2{font-size:.95em;color:#000;margin:0 0 14px;padding-bottom:10px;border-bottom:2px solid #222;display:flex;align-items:center;gap:8px;font-weight:600;letter-spacing:.3px}
 .card h2 .ico{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;background:#f5f5f5;color:#222;flex-shrink:0}
 label{display:block;font-size:.74em;color:#666;margin:12px 0 3px;letter-spacing:.3px;text-transform:uppercase;font-weight:500}
-input,select{width:100%;padding:9px 12px;border:1px solid #d0d0d0;border-radius:6px;background:#fff;color:#222;font-size:.88em;outline:0;transition:border .2s}
-input:focus,select:focus{border-color:#000}
+input,select{width:100%;padding:9px 12px;border:1px solid #d0d0d0;border-radius:6px;background:#fff;color:#222;font-size:.88em;outline:0;transition:border .2s,box-shadow .2s}
+input:focus,select:focus{border-color:#000;box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+input.error,select.error{border-color:#c62828;box-shadow:0 0 0 3px rgba(198,40,40,.1)}
 .hint{font-size:.72em;color:#999;margin:3px 0 0}
-.btn{background:#222;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%;font-size:.88em;font-weight:500;margin-top:16px;transition:background .2s;letter-spacing:.3px}
+.btn{background:#222;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;width:100%;font-size:.88em;font-weight:500;margin-top:16px;transition:background .2s,transform .1s,opacity .2s;letter-spacing:.3px}
 .btn:hover{background:#444}
+.btn:active{transform:scale(.98)}
+.btn.loading{opacity:.7;pointer-events:none}
 .btn-sm{background:#f0f0f0;color:#333;border:1px solid #d0d0d0;padding:6px 14px;border-radius:5px;cursor:pointer;font-size:.78em;margin-top:10px;width:auto;transition:background .2s}
 .btn-sm:hover{background:#e0e0e0}
 .btn-danger{background:#fff;color:#c00;border:1px solid #ecc;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:.82em;margin-top:12px;width:100%;transition:background .2s;text-align:center}
@@ -31,22 +35,19 @@ input:focus,select:focus{border-color:#000}
 .chk label{display:inline-flex;align-items:center;gap:6px;font-size:.82em;width:auto;margin:0;cursor:pointer;background:#f5f5f5;padding:6px 12px;border-radius:5px;border:1px solid #e0e0e0;text-transform:none;color:#444;transition:background .2s}
 .chk label:hover{background:#eee}
 .chk input{width:auto}
-.toast-container{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:360px;width:100%;pointer-events:none}
-.toast{padding:14px 18px;border-radius:8px;font-size:.85em;line-height:1.4;box-shadow:0 8px 24px rgba(0,0,0,.12);pointer-events:auto;transform:translateX(120%);opacity:0;transition:transform .3s ease,opacity .3s ease}
-.toast.show{transform:translateX(0);opacity:1}
-.toast.ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
-.toast.err{background:#fbe9e7;color:#c62828;border:1px solid #ef9a9a}
 pre{background:#fafafa;padding:16px;border-radius:6px;font-size:.78em;overflow-x:auto;line-height:1.6;margin-top:8px;font-family:'Cascadia Code','Fira Code','Consolas',monospace;border:1px solid #eee}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:750px){.row{padding:0}.card{min-width:100%}.grid2{grid-template-columns:1fr}}
 .status-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.82em}
-.status-grid .sg-label{color:#888}
-.status-grid .sg-val{color:#222;text-align:right;font-weight:500}
+.status-grid .sg-label{color:#888;padding:4px 0}
+.status-grid .sg-val{color:#222;text-align:right;font-weight:500;padding:4px 0}
+.status-grid .sg-full{grid-column:1/-1;border-top:1px solid #eee;margin-top:4px;padding-top:8px;font-size:.85em}
 .guide{font-size:.76em;color:#666;line-height:1.6;margin:10px 0;padding:12px;background:#fafafa;border-radius:6px;border-left:3px solid #222}
 .guide a{color:#222;text-decoration:none;font-weight:500}
 .guide a:hover{text-decoration:underline}
-.ota-zone{border:2px dashed #d0d0d0;border-radius:8px;padding:24px;text-align:center;transition:border-color .2s}
+.ota-zone{border:2px dashed #d0d0d0;border-radius:8px;padding:24px;text-align:center;transition:border-color .2s;cursor:pointer}
 .ota-zone:hover{border-color:#999}
+.ota-zone.dragover{border-color:#222;background:#f5f5f5}
 .ota-zone .ico-big{font-size:2em;color:#bbb;margin-bottom:10px}
 hr{border:none;border-top:1px solid #eee;margin:14px 0}
 .footer{text-align:center;margin-top:24px;font-size:.75em;color:#aaa}
@@ -65,7 +66,8 @@ fieldset.beta input,fieldset.beta select{pointer-events:auto}
 fieldset.disabled{opacity:.4;pointer-events:none}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
 .overlay.show{display:flex}
-.modal{background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal h3{font-size:1.05em;color:#c62828;margin-bottom:10px;display:flex;align-items:center;gap:8px}
 .modal p{font-size:.85em;color:#555;line-height:1.6;margin-bottom:18px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end}
@@ -76,11 +78,26 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 .modal-actions .btn-danger:hover{background:#e53935}
 .disclaimer{text-align:center;margin-top:20px;padding:14px;background:#fff8e1;border:1px solid #ffe082;border-radius:8px;font-size:.74em;color:#b76e00;line-height:1.6;max-width:1100px;margin-left:auto;margin-right:auto}
 .disclaimer strong{color:#c62828}
+.toast-overlay{display:none;position:fixed;inset:0;z-index:9998}
+.toast-overlay.show{display:block}
+.toast-center{position:fixed;top:50%;left:50%;z-index:9999;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:12px;pointer-events:none;width:90%;max-width:400px}
+.toast{padding:18px 24px;border-radius:10px;font-size:.88em;line-height:1.5;box-shadow:0 12px 40px rgba(0,0,0,.18);pointer-events:auto;opacity:0;transform:scale(.85) translateY(10px);transition:opacity .3s ease,transform .3s ease;width:100%;text-align:center;font-weight:500}
+.toast.show{opacity:1;transform:scale(1) translateY(0)}
+.toast.ok{background:#e8f5e9;color:#2e7d32;border:1px solid #a5d6a7}
+.toast.err{background:#fbe9e7;color:#c62828;border:1px solid #ef9a9a;box-shadow:0 12px 40px rgba(198,40,40,.15)}
+.toast .toast-close{float:right;background:none;border:none;font-size:1.1em;cursor:pointer;color:inherit;opacity:.5;padding:0 0 0 10px;line-height:1}
+.toast .toast-close:hover{opacity:1}
+.toast .toast-icon{display:inline-block;margin-right:8px;font-size:1.1em}
+.toast-err-bg{position:fixed;inset:0;z-index:9997;background:rgba(198,40,40,.06);pointer-events:none;opacity:0;transition:opacity .3s ease}
+.toast-err-bg.show{opacity:1}
+#toast-progress{position:absolute;bottom:0;left:0;height:3px;background:currentColor;opacity:.3;border-radius:0 0 10px 10px;transition:width 2.5s linear}
+.toast{position:relative;overflow:hidden}
 </style>
 </head>
 <body>
 
-<div class="toast-container" id="toast-container"></div>
+<div class="toast-err-bg" id="toast-err-bg"></div>
+<div class="toast-center" id="toast-center"></div>
 
 <div class="hdr">
 <a href="https://github.com/valeriocomo/ESP32_DRONE_ID" target="_blank" class="brand">
@@ -97,7 +114,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <h1>ESP Remote ID <span>v1.0.0</span></h1>
 </a>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<div class="badge">&#x26a1; 192.168.4.1</div>
+<div class="badge" id="status-badge">&#x26a1; Connecting...</div>
 <a href="https://github.com/valeriocomo/ESP32_DRONE_ID" target="_blank" style="color:#888;font-size:.8em;text-decoration:none">GitHub</a>
 </div>
 </div>
@@ -225,6 +242,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 
 <label>WiFi Password</label>
 <input id="wifi_pass" type="password" maxlength="20" placeholder="Leave empty for open network">
+<div style="margin:8px 0"><button class="btn-sm" type="button" id="toggle-pass">Show Password</button></div>
 
 <div style="margin:10px 0">
 <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
@@ -305,12 +323,12 @@ Live telemetry from the ESP Remote ID. Refreshes every 2 seconds. GPS fix is req
 &#x26a0; Upload a firmware <code>.bin</code> file to update over-the-air. <strong>Do NOT disconnect power during the update.</strong> The device reboots automatically. Use the correct .bin for your ESP32 model.
 <a href="https://valeriocomo.github.io/ESP32_DRONE_ID/" target="_blank">Wiki &rarr;</a>
 </div>
-<div class="ota-zone">
+<div class="ota-zone" id="ota-zone">
 <div class="ico-big">&#x1f4c1;</div>
 <input type="file" id="fwfile" accept=".bin" style="display:none">
-<button class="btn-sm" onclick="document.getElementById('fwfile').click()">Select .bin file</button>
+<button class="btn-sm" type="button" onclick="document.getElementById('fwfile').click()">Select .bin file</button>
 <span id="fw_name" style="font-size:.8em;color:#999;display:block;margin-top:8px">No file selected</span>
-<button class="btn" onclick="showModal('ota')" style="margin-top:12px">Upload Firmware</button>
+<button class="btn" type="button" onclick="showModal('ota')" style="margin-top:12px" id="ota-btn">Upload Firmware</button>
 <div id="ota_progress" style="margin-top:10px;font-size:.82em;color:#888"></div>
 </div>
 </div>
@@ -340,13 +358,26 @@ ESP Remote ID v1.0.0 &mdash; <a href="https://github.com/valeriocomo/ESP32_DRONE
 <script>
 function $(id){return document.getElementById(id)}
 function showMsg(t,e){
-var c=$('toast-container');
-var el=document.createElement('div');
-el.className='toast '+(e?'err':'ok');
-el.textContent=t;
-c.appendChild(el);
-requestAnimationFrame(()=>{el.classList.add('show')});
-setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300)},e?6e3:2500)
+  var c=$('toast-center');
+  var bg=$('toast-err-bg');
+  var el=document.createElement('div');
+  el.className='toast '+(e?'err':'ok');
+  var icon=e?'&#x26a0;':'&#x2705;';
+  el.innerHTML='<span class="toast-icon">'+icon+'</span>'+t.replace(/</g,'&lt;')+'<button class="toast-close" onclick="this.parentElement.remove();if(this.parentElement.classList.contains(\'err\')){$(\'toast-err-bg\').classList.remove(\'show\')}">&times;</button>';
+  c.appendChild(el);
+  var dur=e?5e3:2500;
+  if(e){bg.classList.add('show')}
+  requestAnimationFrame(function(){el.classList.add('show')});
+  var p=document.createElement('div');
+  p.id='toast-progress';
+  p.style.width='100%';
+  el.appendChild(p);
+  requestAnimationFrame(function(){p.style.width='0%'});
+  setTimeout(function(){
+    el.classList.remove('show');
+    if(e){setTimeout(function(){bg.classList.remove('show')},300)}
+    setTimeout(function(){el.remove()},300)
+  },dur)
 }
 
 var modalAction = null;
@@ -403,7 +434,21 @@ showModal('efuse');
 }
 }
 
-$('fwfile').onchange=function(){var f=this.files[0];$('fw_name').textContent=f?f.name:'No file selected'}
+$('fwfile').onchange=function(){var f=this.files[0];$('fw_name').textContent=f?f.name+' ('+(f.size/1024).toFixed(0)+' KB)':'No file selected';$('fw_name').style.color=f?'#222':'#999'}
+
+// Drag & drop OTA
+var otaZone=$('ota-zone');
+otaZone.ondragover=function(e){e.preventDefault();this.classList.add('dragover')}
+otaZone.ondragleave=function(){this.classList.remove('dragover')}
+otaZone.ondrop=function(e){e.preventDefault();this.classList.remove('dragover');var f=e.dataTransfer.files[0];if(f&&f.name.endsWith('.bin')){$('fwfile').files=e.dataTransfer.files;$('fwfile').onchange()}else{showMsg('Please drop a .bin file',1)}}
+otaZone.onclick=function(){if(!$('fwfile').files.length){$('fwfile').click()}}
+
+// Toggle password
+$('toggle-pass').onclick=function(){
+  var p=$('wifi_pass');
+  if(p.type==='password'){p.type='text';this.textContent='Hide Password'}
+  else{p.type='password';this.textContent='Show Password'}
+}
 
 function getCfg(){
 fetch('/api/config').then(r=>r.json()).then(c=>{
@@ -437,7 +482,7 @@ $('tx_wifi_bcn').checked=!!(c.tx_modes&1)
 $('tx_wifi_nan').checked=!!(c.tx_modes&2)
 $('tx_ble4').checked=!!(c.tx_modes&4)
 $('tx_ble5').checked=!!(c.tx_modes&8)
-})}
+}).catch(function(){showMsg('Cannot connect to ESP Remote ID. Make sure you are connected to the device WiFi.',1)})}
 
 function collectForm(){return{
 uas_id:$('uas_id').value,
@@ -471,32 +516,58 @@ public_key_5:$('pubkey5').value,
 tx_modes:($('tx_wifi_bcn').checked?1:0)|($('tx_wifi_nan').checked?2:0)|($('tx_ble4').checked?4:0)|($('tx_ble5').checked?8:0)
 }}
 
-function doSave(){
+function doSave(btn){
+if(btn){btn.classList.add('loading');btn.disabled=true}
 fetch('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(collectForm())})
-.then(r=>r.json()).then(j=>showMsg('Configuration saved! Check the Status panel to confirm.')).catch(e=>showMsg('Error saving configuration',1))
+.then(r=>{
+if(!r.ok){throw new Error('HTTP '+r.status)}
+return r.json()
+})
+.then(j=>{
+showMsg('Configuration saved successfully');
+if(btn){btn.classList.remove('loading');btn.disabled=false}
+})
+.catch(e=>{
+showMsg('Error saving configuration: '+e.message,1);
+if(btn){btn.classList.remove('loading');btn.disabled=false}
+})
 }
 
-function saveForm(){
+function saveForm(e){
+var btn=e.target.querySelector('.btn');
 var c = collectForm();
 if(c.lock_level===2 || c.options&1){
 showModal('danger');
+modalAction = function(){doSave(btn)};
 }else{
-doSave();
+doSave(btn);
 }
 }
 
 getCfg()
-;['f1','f2','f3','f4'].forEach(id=>{$(id).onsubmit=function(e){e.preventDefault();saveForm()}})
+;['f1','f2','f3','f4'].forEach(function(id){$(id).onsubmit=function(e){e.preventDefault();saveForm(e)}})
 
 function otaUpdate(){
 var f=$('fwfile').files[0]
 if(!f){showMsg('Select a .bin file first',1);return}
+var btn=$('ota-btn');
+btn.classList.add('loading');btn.disabled=true;
+$('ota_progress').textContent='Uploading... ('+(f.size/1024).toFixed(0)+' KB)'
 var r=new FileReader()
 r.onload=function(e){
-$('ota_progress').textContent='Uploading... ('+(f.size/1024).toFixed(0)+' KB)'
-fetch('/ota',{method:'POST',body:e.target.result})
-.then(r=>r.text()).then(t=>{$('ota_progress').textContent=t;showMsg('OTA complete, rebooting...')})
-.catch(e=>{$('ota_progress').textContent='';showMsg('OTA failed',1)})}
+fetch('/ota',{method:'POST',body:e.target.result,headers:{'Content-Type':'application/octet-stream'}})
+.then(r=>r.text()).then(t=>{
+$('ota_progress').textContent=t;
+showMsg('OTA complete, rebooting...');
+btn.classList.remove('loading');btn.disabled=false
+})
+.catch(function(e){
+$('ota_progress').textContent='';
+showMsg('OTA failed: '+e.message,1);
+btn.classList.remove('loading');btn.disabled=false
+})
+}
+r.onerror=function(){showMsg('Failed to read file',1);btn.classList.remove('loading');btn.disabled=false}
 r.readAsArrayBuffer(f)
 }
 
@@ -505,7 +576,7 @@ fetch('/api/status').then(r=>r.json()).then(s=>{
 var h=''
 h+='<div class="status-grid">'
 h+='<div class="sg-label">Protocol</div><div class="sg-val">'+['Unknown','MAVLink','MSP','NMEA','None'][s.protocol]+'</div>'
-h+='<div class="sg-label">GPS</div><div class="sg-val">'+(s.gps_valid?'&#x2705; OK':'&#x274c; No fix')+'</div>'
+h+='<div class="sg-label">GPS</div><div class="sg-val">'+(s.gps_valid?'<span style="color:#2e7d32">&#x2705; OK</span>':'<span style="color:#c62828">&#x274c; No fix</span>')+'</div>'
 h+='<div class="sg-label">Latitude</div><div class="sg-val">'+s.lat.toFixed(6)+'</div>'
 h+='<div class="sg-label">Longitude</div><div class="sg-val">'+s.lon.toFixed(6)+'</div>'
 h+='<div class="sg-label">Altitude</div><div class="sg-val">'+s.alt.toFixed(1)+' m</div>'
@@ -513,12 +584,15 @@ h+='<div class="sg-label">Speed</div><div class="sg-val">'+s.speed.toFixed(1)+' 
 h+='<div class="sg-label">Heading</div><div class="sg-val">'+s.heading+'&deg;</div>'
 h+='<div class="sg-label">Satellites</div><div class="sg-val">'+s.satellites+'</div>'
 h+='<div class="sg-label">Fix Type</div><div class="sg-val">'+s.fix_type+'</div>'
+h+='<div class="sg-full"><strong>Transmission Counters</strong></div>'
 h+='<div class="sg-label">Tx Total</div><div class="sg-val">'+s.tx_total+'</div>'
-h+='<div class="sg-label">WiFi BCN</div><div class="sg-val">'+s.tx_wifi_bcn+'</div>'
+h+='<div class="sg-label">WiFi Beacon</div><div class="sg-val">'+s.tx_wifi_bcn+'</div>'
 h+='<div class="sg-label">BLE 4.0</div><div class="sg-val">'+s.tx_ble4+'</div>'
+h+='<div class="sg-label">BLE 5.0</div><div class="sg-val">'+(s.tx_ble5||0)+'</div>'
 h+='</div>'
 $('status').innerHTML=h
-}).catch(()=>{$('status').textContent='Waiting for connection...'})
+$('status-badge').innerHTML='&#x26a1; '+['Unknown','MAVLink','MSP','NMEA','No FC'][s.protocol]
+}).catch(function(){$('status').textContent='Waiting for connection...';$('status-badge').innerHTML='&#x26a1; Disconnected'})
 },2000)
 </script>
 </body>

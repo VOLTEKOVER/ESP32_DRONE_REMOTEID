@@ -1,0 +1,28 @@
+name: Greetings
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+jobs:
+  greeting:
+    name: Welcome
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Greet new contributor
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-message: >
+            👋 Thanks for opening your first issue in ESP Remote ID!
+            Please make sure to include relevant details like your ESP32 model,
+            flight controller, and the steps to reproduce the issue.
+          pr-message: >
+            🎉 Thanks for your first pull request! We'll review it as soon as possible.
+            Make sure your code follows the project conventions and compiles cleanly.

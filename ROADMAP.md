@@ -45,9 +45,9 @@ Modulo ESP32 universale che trasmette Remote ID (OpenDroneID) per **qualsiasi** 
 
 ### FASE 3 — Trasmissione OpenDroneID
 - [x] **WiFi Beacon**: frame 802.11 beacon con messaggio ODID via `esp_wifi_80211_tx`
-- [ ] **WiFi NAN**: Neighbor Awareness Networking action frames
+- [ ] **WiFi NAN**: Neighbor Awareness Networking action frames (beta, disabilitato)
 - [x] **BLE 4.0**: legacy advertising non-connectable (non-configured raw adv)
-- [ ] **BLE 5.0**: coded PHY Long Range (esp_ble_gap_ext_adv - DA VERIFICARE su HW)
+- [ ] **BLE 5.0**: coded PHY Long Range (esp_ble_gap_ext_adv — da verificare su HW)
 - [x] **Packer OpenDroneID**: Intel opendroneid.c (odid_message_build_pack)
 
 ### FASE 4 — Configurazione Web
@@ -60,6 +60,8 @@ Modulo ESP32 universale che trasmette Remote ID (OpenDroneID) per **qualsiasi** 
 
 ### FASE 5 — Integrazione
 - [x] Main loop: init → autodetect → parse → transmit
+- [x] Partizione OTA (dual-slot) per aggiornamenti via web
+- [x] CI/CD: GitHub Actions per build automatica su ESP32/S3/C3
 - [ ] Health check e heartbeat
 - [ ] Build & test su HW reale
 - [ ] Test OTA update
@@ -149,9 +151,10 @@ components/esp_remote_id/
 
 ## Note Importanti
 
-- **Build**: `idf.py build flash monitor` (richiede ESP-IDF v6.0.1 in `C:\esp\v6.0.1\`)
+- **Build**: `idf.py build flash monitor` (richiede ESP-IDF v6.0.1 in `C:\esp\v6.0.1\`); oppure via GitHub Actions (push su main)
 - **Config**: Aprire `http://192.168.4.1` dopo aver connesso il WiFi all'AP "ESP-RID"
-- **OTA**: Caricare firmware .bin dalla pagina web
+- **OTA**: Caricare firmware .bin dalla pagina web (`/ota`); partizione custom `partitions.csv` (dual-slot)
+- **CI**: Workflow `.github/workflows/build.yml` compila per ESP32, ESP32-S3, ESP32-C3 e crea nightly release
 - **Antenna**: Usare modulo con connettore U.FL (carbonio scherma antenna PCB)
 - **Resistenza sdoppio GPS**: Mettere 1kΩ in serie sul ramo verso l'ESP32
 - **BLE 5.0**: Richiede HW con supporto Coded PHY (ESP32-C3, ESP32-S3)

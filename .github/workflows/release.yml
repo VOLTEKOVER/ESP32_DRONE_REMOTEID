@@ -1,0 +1,165 @@
+name: Release Firmware
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build for ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - esp32
+          - esp32s3
+          - esp32c3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup ESP-IDF v6.0.1
+        uses: espressif/esp-idf-cargo-action@v1
+        with:
+          esp_idf_version: v6.0.1
+
+      - name: Set build target
+        run: idf.py set-target ${{ matrix.target }}
+        shell: bash
+
+      - name: Configure partition table for OTA
+        run: |
+          echo "CONFIG_PARTITION_TABLE_CUSTOM=y" >> sdkconfig
+          echo "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions.csv\"" >> sdkconfig
+          echo "CONFIG_PARTITION_TABLE_FILENAME=\"partitions.csv\"" >> sdkconfig
+        shell: bash
+
+      - name: Build firmware
+        run: idf.py build
+        shell: bash
+
+      - name: Collect build artifacts
+        run: |
+          mkdir -p release/${{ matrix.target }}
+          cp build/bootloader/bootloader.bin release/${{ matrix.target }}/
+          cp build/partition_table/partition-table.bin release/${{ matrix.target }}/
+          cp build/*.bin release/${{ matrix.target }}/
+        shell: bash
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.target }}
+          path: release/
+
+  create-release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Extract version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Generate manifest.json
+        run: |
+          cat > artifacts/manifest.json << 'MANIFEST'
+          {
+            "name": "ESP Remote ID",
+            "version": "${{ env.VERSION }}",
+            "home_url": "https://valeriocomo.github.io/ESP32_DRONE_ID",
+            "config_url": "http://192.168.4.1",
+            "builds": [
+              {
+                "chipFamily": "ESP32",
+                "parts": [
+                  { "path": "firmware-esp32/esp32/bootloader.bin", "offset": 0x1000 },
+                  { "path": "firmware-esp32/esp32/partition-table.bin", "offset": 0x8000 },
+                  { "path": "firmware-esp32/esp32/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+                ]
+              },
+              {
+                "chipFamily": "ESP32-S3",
+                "parts": [
+                  { "path": "firmware-esp32s3/esp32s3/bootloader.bin", "offset": 0x0 },
+                  { "path": "firmware-esp32s3/esp32s3/partition-table.bin", "offset": 0x8000 },
+                  { "path": "firmware-esp32s3/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+                ]
+              },
+              {
+                "chipFamily": "ESP32-C3",
+                "parts": [
+                  { "path": "firmware-esp32c3/esp32c3/bootloader.bin", "offset": 0x0 },
+                  { "path": "firmware-esp32c3/esp32c3/partition-table.bin", "offset": 0x8000 },
+                  { "path": "firmware-esp32c3/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+                ]
+              }
+            ]
+          }
+          MANIFEST
+
+      - name: Package firmware
+        run: |
+          cd artifacts
+          mkdir -p firmware
+          cp -r firmware-esp32/esp32 firmware/esp32
+          cp -r firmware-esp32s3/esp32s3 firmware/esp32s3
+          cp -r firmware-esp32c3/esp32c3 firmware/esp32c3
+          cp manifest.json firmware/
+          cd firmware
+          7z a ../firmware-${{ env.VERSION }}.zip .
+        shell: bash
+
+      - name: Generate release notes
+        run: |
+          cat > release-notes.md << 'EOF'
+          ## ESP Remote ID ${{ env.VERSION }}
+
+          Downloads:
+          - **ESP32**: bootloader + partition-table + app binaries
+          - **ESP32-S3**: bootloader + partition-table + app binaries
+          - **ESP32-C3**: bootloader + partition-table + app binaries
+
+          ### Flashing
+          Use the web installer at https://valeriocomo.github.io/ESP32_DRONE_ID/
+          or flash manually with esptool.
+
+          ### Changes
+          EOF
+          if git show-ref --tags --quiet; then
+            PREV_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
+            if [ -n "$PREV_TAG" ]; then
+              echo "" >> release-notes.md
+              echo "### Commits since $PREV_TAG" >> release-notes.md
+              git log --oneline "$PREV_TAG..$GITHUB_SHA" >> release-notes.md
+            fi
+          fi
+        shell: bash
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: ESP Remote ID ${{ github.ref_name }}
+          body_path: release-notes.md
+          files: |
+            artifacts/firmware-${{ env.VERSION }}.zip
+            artifacts/manifest.json
+          draft: false
+          prerelease: false

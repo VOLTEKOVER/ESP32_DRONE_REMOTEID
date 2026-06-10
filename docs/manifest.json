@@ -1,6 +1,6 @@
 {
   "name": "ESP Remote ID",
-  "version": "1.0.0",
+  "version": "0.1.0-dev",
   "home_url": "https://valeriocomo.github.io/ESP32_DRONE_ID",
   "config_url": "http://192.168.4.1",
   "new_install_improv_wait_time": 0,
@@ -8,25 +8,25 @@
     {
       "chipFamily": "ESP32",
       "parts": [
-        { "path": "firmware/esp32-bootloader.bin", "offset": 0x1000 },
-        { "path": "firmware/esp32-partitions.bin", "offset": 0x8000 },
-        { "path": "firmramework.bin", "offset": 0x10000 }
+        { "path": "firmware/esp32/bootloader.bin", "offset": 0x1000 },
+        { "path": "firmware/esp32/partition-table.bin", "offset": 0x8000 },
+        { "path": "firmware/esp32/esp32-remote-id-scanner.bin", "offset": 0x11000 }
       ]
     },
     {
       "chipFamily": "ESP32-S3",
       "parts": [
-        { "path": "firmware/esp32s3-bootloader.bin", "offset": 0x0 },
-        { "path": "firmware/esp32s3-partitions.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32s3-firmware.bin", "offset": 0x10000 }
+        { "path": "firmware/esp32s3/bootloader.bin", "offset": 0x0 },
+        { "path": "firmware/esp32s3/partition-table.bin", "offset": 0x8000 },
+        { "path": "firmware/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
       ]
     },
     {
       "chipFamily": "ESP32-C3",
       "parts": [
-        { "path": "firmware/esp32c3-bootloader.bin", "offset": 0x0 },
-        { "path": "firmware/esp32c3-partitions.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32c3-firmware.bin", "offset": 0x10000 }
+        { "path": "firmware/esp32c3/bootloader.bin", "offset": 0x0 },
+        { "path": "firmware/esp32c3/partition-table.bin", "offset": 0x8000 },
+        { "path": "firmware/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
       ]
     }
   ]
