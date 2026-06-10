@@ -27,3 +27,4 @@ idf_component_register(
     EMBED_TXTFILES
         "webui/config.html"
 )
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wno-error=address-of-packed-member)
