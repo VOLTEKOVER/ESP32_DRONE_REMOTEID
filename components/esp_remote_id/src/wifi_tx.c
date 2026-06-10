@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "esp_log.h"
 #include "esp_system.h"
+#include "esp_random.h"
 #include "esp_mac.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
@@ -17,7 +18,7 @@
 static bool g_initialized = false;
 static uint8_t g_random_mac[6];
 static ODID_UAS_Data g_uas_data;
-static ODID_MessagePack_encoded g_pack;
+
 
 static void generate_random_mac(uint8_t mac[6])
 {
@@ -66,7 +67,7 @@ void wifi_tx_init(void)
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_AP, &ap_config));
     ESP_ERROR_CHECK(esp_wifi_start());
 
-    esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW_HT20);
+    esp_wifi_set_bandwidth(WIFI_IF_AP, WIFI_BW20);
     esp_wifi_set_max_tx_power(80);
 
     esp_wifi_set_promiscuous(true);
@@ -96,8 +97,8 @@ bool wifi_tx_transmit(rid_gps_data_t *gps, rid_identity_t *identity)
     g_uas_data.Location.SpeedHorizontal = gps->speed;
     g_uas_data.Location.Direction = gps->heading;
     g_uas_data.Location.SpeedVertical = 0;
-    g_uas_data.Location.HorizontalAccuracy = ODID_HOR_ACC_30M;
-    g_uas_data.Location.VerticalAccuracy = ODID_VER_ACC_45M;
+    g_uas_data.Location.HorizAccuracy = ODID_HOR_ACC_30_METER;
+    g_uas_data.Location.VertAccuracy = ODID_VER_ACC_45_METER;
 
     g_uas_data.SystemValid = 1;
     g_uas_data.System.OperatorLatitude = gps->latitude;

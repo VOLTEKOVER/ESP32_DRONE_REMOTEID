@@ -23,6 +23,7 @@ idf_component_register(
         esp_system
         freertos
         esp_http_server
+        app_update
         esp_driver_uart
     EMBED_TXTFILES
         "webui/config.html"

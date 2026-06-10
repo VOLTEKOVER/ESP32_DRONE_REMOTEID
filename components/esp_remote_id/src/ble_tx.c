@@ -2,9 +2,11 @@
 #include <string.h>
 #include "esp_log.h"
 #include "esp_bt.h"
+#ifdef CONFIG_BT_BLUEDROID_ENABLED
 #include "esp_bt_main.h"
 #include "esp_ble_gap.h"
 #include "esp_ble_adv_data.h"
+#endif
 #include "ble_tx.h"
 #include "opendroneid.h"
 
@@ -13,6 +15,7 @@
 #define RID_SERVICE_UUID 0xFFFA
 
 static bool g_initialized = false;
+#ifdef CONFIG_BT_BLUEDROID_ENABLED
 static ODID_UAS_Data g_uas_data;
 static uint8_t g_adv_data[64];
 
@@ -44,8 +47,8 @@ static void build_legacy_adv(rid_gps_data_t *gps, rid_identity_t *identity, uint
     g_uas_data.Location.Height = gps->altitude_relative;
     g_uas_data.Location.SpeedHorizontal = gps->speed;
     g_uas_data.Location.Direction = gps->heading;
-    g_uas_data.Location.HorizontalAccuracy = ODID_HOR_ACC_30M;
-    g_uas_data.Location.VerticalAccuracy = ODID_VER_ACC_45M;
+    g_uas_data.Location.HorizAccuracy = ODID_HOR_ACC_30_METER;
+    g_uas_data.Location.VertAccuracy = ODID_VER_ACC_45_METER;
 
     g_uas_data.SystemValid = 1;
     g_uas_data.System.OperatorLatitude = gps->latitude;
@@ -71,11 +74,12 @@ static void build_legacy_adv(rid_gps_data_t *gps, rid_identity_t *identity, uint
 
     *len = idx;
 }
+#endif
 
 void ble_tx_init(void)
 {
     if (g_initialized) return;
-
+#ifdef CONFIG_BT_BLUEDROID_ENABLED
     esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -86,12 +90,16 @@ void ble_tx_init(void)
 
     g_initialized = true;
     ESP_LOGI(TAG, "BLE initialized");
+#else
+    ESP_LOGW(TAG, "BLE not available on this target");
+#endif
 }
 
 bool ble_tx_transmit_legacy(rid_gps_data_t *gps, rid_identity_t *identity)
 {
     if (!g_initialized || !gps || !identity) return false;
 
+#ifdef CONFIG_BT_BLUEDROID_ENABLED
     uint16_t len;
     build_legacy_adv(gps, identity, g_adv_data, &len);
 
@@ -110,12 +118,16 @@ bool ble_tx_transmit_legacy(rid_gps_data_t *gps, rid_identity_t *identity)
     esp_ble_gap_start_advertising(&adv_params);
 
     return true;
+#else
+    return false;
+#endif
 }
 
 bool ble_tx_transmit_lr(rid_gps_data_t *gps, rid_identity_t *identity)
 {
     if (!g_initialized || !gps || !identity) return false;
 
+#ifdef CONFIG_BT_BLUEDROID_ENABLED
     uint16_t len;
     build_legacy_adv(gps, identity, g_adv_data, &len);
 
@@ -136,4 +148,7 @@ bool ble_tx_transmit_lr(rid_gps_data_t *gps, rid_identity_t *identity)
     esp_ble_gap_ext_adv_start(1, &inst, 3000);
 
     return true;
+#else
+    return false;
+#endif
 }
