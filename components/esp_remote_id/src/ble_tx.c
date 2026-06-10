@@ -4,8 +4,7 @@
 #include "esp_bt.h"
 #ifdef CONFIG_BT_BLUEDROID_ENABLED
 #include "esp_bt_main.h"
-#include "esp_ble_gap.h"
-#include "esp_ble_adv_data.h"
+#include "esp_gap_ble_api.h"
 #endif
 #include "ble_tx.h"
 #include "opendroneid.h"

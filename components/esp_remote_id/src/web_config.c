@@ -16,7 +16,7 @@
 
 extern const char config_html_start[] asm("_binary_config_html_start");
 extern const char config_html_end[] asm("_binary_config_html_end");
-static const size_t config_html_size = (size_t)(config_html_end - config_html_start);
+#define config_html_size ((size_t)(config_html_end - config_html_start))
 
 static httpd_handle_t g_server = NULL;
 
