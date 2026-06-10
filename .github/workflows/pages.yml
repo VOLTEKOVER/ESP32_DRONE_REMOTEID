@@ -1,11 +1,10 @@
 name: Deploy GitHub Pages
 
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - 'docs/**'
-      - 'images/**'
+  workflow_run:
+    workflows: ["Build Firmware"]
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -28,6 +27,31 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download firmware artifacts
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded-artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Prepare firmware directory
+        if: github.event_name == 'workflow_run'
+        run: |
+          for dir in downloaded-artifacts/firmware-*/; do
+            target=$(basename "$dir" | sed 's/firmware-//')
+            mkdir -p "docs/firmware/$target"
+            cp -r "$dir/$target/"* "docs/firmware/$target/"
+          done
+          ls -la docs/firmware/*/
+        shell: bash
+
+      - name: Confirm firmware files
+        run: |
+          echo "=== docs/firmware/ contents ==="
+          find docs/firmware -type f 2>/dev/null || echo "(empty - run CI build first)"
+        shell: bash
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

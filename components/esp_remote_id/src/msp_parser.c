@@ -64,7 +64,6 @@ static void parse_msp(uint8_t *buf, int len)
     if (len < 6) return;
     if (buf[0] != '$' || buf[1] != 'M' || buf[2] != '<') return;
 
-    uint8_t msp_cmd = buf[3];
     uint8_t msp_size = buf[4];
     uint8_t msp_type = buf[5];
 

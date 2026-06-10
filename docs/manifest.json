@@ -10,7 +10,7 @@
       "parts": [
         { "path": "firmware/esp32/bootloader.bin", "offset": 0x1000 },
         { "path": "firmware/esp32/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+        { "path": "firmware/esp32/esp32-remote-id-scanner.bin", "offset": 0x20000 }
       ]
     },
     {
@@ -18,7 +18,7 @@
       "parts": [
         { "path": "firmware/esp32s3/bootloader.bin", "offset": 0x0 },
         { "path": "firmware/esp32s3/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+        { "path": "firmware/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
       ]
     },
     {
@@ -26,7 +26,7 @@
       "parts": [
         { "path": "firmware/esp32c3/bootloader.bin", "offset": 0x0 },
         { "path": "firmware/esp32c3/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x11000 }
+        { "path": "firmware/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
       ]
     }
   ]
