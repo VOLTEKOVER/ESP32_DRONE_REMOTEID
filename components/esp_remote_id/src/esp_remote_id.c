@@ -31,12 +31,12 @@ static void default_config(rid_config_t *cfg)
 
     cfg->ua_type = 1;
     cfg->id_type = 1;
-    strcpy(cfg->uas_id, "ESP32-RID-001");
-    strcpy(cfg->operator_id, "OP-UNKNOWN");
+    snprintf(cfg->uas_id, sizeof(cfg->uas_id), "%s", "ESP32-RID-001");
+    snprintf(cfg->operator_id, sizeof(cfg->operator_id), "%s", "OP-UNKNOWN");
 
     cfg->ua_type_2 = 0;
     cfg->id_type_2 = 0;
-    strcpy(cfg->uas_id_2, "");
+    cfg->uas_id_2[0] = '\0';
 
     cfg->tx_modes = RID_TRANSMIT_WIFI_BCN;
     cfg->wifi_channel = 6;
@@ -48,8 +48,9 @@ static void default_config(rid_config_t *cfg)
     cfg->ble5_rate_hz = 1.0f;
     cfg->ble5_power_dbm = 18.0f;
 
-    strcpy(cfg->wifi_ssid, "ESP-RID");
-    strcpy(cfg->wifi_password, "");
+    cfg->wifi_ssid[0] = '\0';
+    snprintf(cfg->wifi_ssid, sizeof(cfg->wifi_ssid), "%s", "ESP-RID");
+    cfg->wifi_password[0] = '\0';
     cfg->webserver_en = 1;
 
     cfg->mavlink_sysid = 0;
@@ -59,7 +60,7 @@ static void default_config(rid_config_t *cfg)
     cfg->lock_level = 0;
 
     for (int i = 0; i < ESP_RID_NUM_KEYS; i++)
-        strcpy(cfg->public_keys[i], "");
+        cfg->public_keys[i][0] = '\0';
 }
 
 void esp_rid_init(void)
@@ -76,6 +77,7 @@ void esp_rid_init(void)
     nmea_parser_init();
     msp_parser_init();
     mavlink_parser_init();
+    mavlink_parser_set_sysid_filter(g_config.mavlink_sysid);
 
     wifi_tx_init();
     ble_tx_init();
@@ -93,6 +95,7 @@ void esp_rid_set_config(const rid_config_t *config)
     if (g_config.baud_rate != old_baud && g_config.baud_rate > 0) {
         protocol_detect_reinit(g_config.baud_rate);
     }
+    mavlink_parser_set_sysid_filter(g_config.mavlink_sysid);
 }
 
 void esp_rid_get_config(rid_config_t *config)
@@ -184,16 +187,36 @@ static void rid_task(void *arg)
         }
 
         if (gps_data.fix_type >= 2 && gps_data.latitude != 0.0) {
-            memcpy(&g_state.gps, &gps_data, sizeof(rid_gps_data_t));
-            g_state.gps_valid = true;
-            g_state.last_update_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
+            bool force_tx = (g_config.options & RID_OPT_FORCE_ARM_OK) && gps_data.armed;
 
-            strncpy(g_state.identity.uas_id, g_config.uas_id, ESP_RID_MAX_STR_LEN);
-            strncpy(g_state.identity.operator_id, g_config.operator_id, ESP_RID_MAX_STR_LEN);
-            g_state.identity.id_type = g_config.id_type;
-            g_state.identity.ua_type = g_config.ua_type;
+            if (force_tx || gps_data.fix_type >= 2) {
+                memcpy(&g_state.gps, &gps_data, sizeof(rid_gps_data_t));
+                g_state.gps_valid = true;
+                g_state.last_update_ms = xTaskGetTickCount() * portTICK_PERIOD_MS;
 
-            update_transmissions();
+                snprintf(g_state.identity.uas_id, sizeof(g_state.identity.uas_id), "%s", g_config.uas_id);
+                snprintf(g_state.identity.operator_id, sizeof(g_state.identity.operator_id), "%s", g_config.operator_id);
+                g_state.identity.id_type = g_config.id_type;
+                g_state.identity.ua_type = g_config.ua_type;
+                snprintf(g_state.identity.uas_id_2, sizeof(g_state.identity.uas_id_2), "%s", g_config.uas_id_2);
+                g_state.identity.id_type_2 = g_config.id_type_2;
+                g_state.identity.ua_type_2 = g_config.ua_type_2;
+
+                if (g_config.options & RID_OPT_DONT_SAVE_BASIC_ID) {
+                    g_state.identity.uas_id[0] = '\0';
+                    g_state.identity.uas_id_2[0] = '\0';
+                }
+
+                update_transmissions();
+            }
+        }
+
+        if (g_config.options & RID_OPT_PRINT_RID_MAVLINK) {
+            ESP_LOGI(TAG, "RID uas=%s lat=%.6f lon=%.6f alt=%.1f speed=%.1f hdg=%d fix=%d sat=%u",
+                g_state.identity.uas_id,
+                g_state.gps.latitude, g_state.gps.longitude,
+                (double)g_state.gps.altitude_msl, (double)g_state.gps.speed,
+                g_state.gps.heading, g_state.gps.fix_type, g_state.gps.satellites);
         }
 
         log_cycle++;

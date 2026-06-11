@@ -31,7 +31,9 @@ static double nmea_to_decimal(const char *nmea_str, char dir)
 
     int deg_len = dot_pos - 2;
     char deg_str[4] = {0};
-    strncpy(deg_str, nmea_str, deg_len);
+    if (deg_len >= (int)sizeof(deg_str)) deg_len = sizeof(deg_str) - 1;
+    memcpy(deg_str, nmea_str, deg_len);
+    deg_str[deg_len] = '\0';
     double degrees = atoi(deg_str);
 
     double minutes = atof(nmea_str + deg_len);
@@ -110,8 +112,10 @@ static void parse_nmea_line(const char *line)
 
 bool nmea_parser_get(rid_gps_data_t *gps)
 {
-    uint8_t c;
-    while (uart_read_bytes(UART_NMEA, &c, 1, 0) > 0) {
+    uint8_t buf[64];
+    int len = uart_read_bytes(UART_NMEA, buf, sizeof(buf), 0);
+    for (int i = 0; i < len; i++) {
+        uint8_t c = buf[i];
         if (c == '\n' || g_buf_idx >= NMEA_BUF_SIZE - 1) {
             if (g_nmea_buf[0] == '$' && g_buf_idx > 5) {
                 g_nmea_buf[g_buf_idx] = '\0';

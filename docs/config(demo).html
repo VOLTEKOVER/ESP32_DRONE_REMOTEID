@@ -211,6 +211,12 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 .dash-btn-config{background:var(--accent);color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.82em;font-weight:500;transition:background .2s;white-space:nowrap}
 .dash-btn-config:hover{opacity:.8}
 
+.dash-bottom{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px}
+@media(max-width:750px){.dash-bottom{grid-template-columns:1fr}}
+.dash-bottom .card{margin:0;min-width:0}
+.dash-bottom .card h2{font-size:.82em;margin-bottom:10px;padding-bottom:6px}
+.dash-bottom .status-grid{font-size:.78em}
+
 /* Float animation for bar values */
 @keyframes floatUp{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
 .bar-group .bar-value{animation:floatUp .4s ease}
@@ -296,6 +302,32 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <button class="hdr-btn" onclick="setView('advanced')" style="flex:1;justify-content:center">&#x2699; Open Config</button>
 <button class="hdr-btn" onclick="showMsg('Restart simulated (no real device)')" style="flex:1;justify-content:center">&#x1f504; Restart</button>
 <button class="hdr-btn danger" onclick="showModal('reset')" style="flex:1;justify-content:center">&#x21bb; Factory Reset</button>
+</div>
+
+<div class="dash-bottom">
+<div class="card">
+<h2><span class="ico">&#x1f4ca;</span> Live Telemetry</h2>
+<div id="status" style="min-height:60px">Loading...</div>
+</div>
+<div class="card">
+<h2><span class="ico">&#x1f4bb;</span> Console</h2>
+<div class="term-container" style="margin-top:0">
+<div class="term-header">
+<span class="term-title">&#x1f4bb; Console Output</span>
+<div class="term-toolbar">
+<button class="btn-sm" onclick="clearTerm2()" title="Clear console">&#x1f5d1; Clear</button>
+<button class="btn-sm" id="term-scroll-btn2" onclick="toggleTermScroll2()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
+</div>
+</div>
+<div class="term-output" id="term-output2" style="height:220px">
+<div class="term-placeholder">Waiting for logs...</div>
+</div>
+<div class="term-input-row">
+<input type="text" id="term-input2" placeholder="Type command (restart, status, reset)..." onkeydown="if(event.key==='Enter')sendCmd2()">
+<button class="btn-sm" onclick="sendCmd2()" style="margin:0;flex-shrink:0">Send</button>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -931,45 +963,66 @@ var termAutoScroll=true
 var lastLogCount=0
 var demoLogEntries=['System initialized','Protocol detect: MAVLink detected on UART1','GPS: 3D fix acquired (12 satellites)','WiFi Beacon: TX OK','BLE 4.0: TX OK','BLE 5.0: TX OK','Position: 45.123456, 9.654321','Battery: 12.4V','Altitude: 82.3m AGL','Speed: 5.2 m/s','Heading: 180\u00b0 S','Telemetry frame sent','Heartbeat OK','SDK version: v5.4.0','ESP32 temperature: 48\u00b0C'];
 var demoLogIdx=0;
-function pollLogs(){
-  if(demoLogIdx>=demoLogEntries.length)return;
-  var out=$('term-output')
+function renderTermTo(outId, entries){
+  if(!entries||entries.length===0)return
+  var out=document.getElementById(outId)
+  if(!out)return
   var ph=out.querySelector('.term-placeholder')
   if(ph)ph.remove()
-  var count=Math.min(3,demoLogEntries.length-demoLogIdx);
   var shouldScroll=termAutoScroll && (out.scrollTop >= out.scrollHeight - out.clientHeight - 20 || lastLogCount===0)
-  for(var i=0;i<count;i++){
-    var d=document.createElement('div');d.className='line lv-'+(demoLogIdx%3===0?'I':'D')
-    var ts='<span class="ts">['+((demoLogIdx+1)*2.1).toFixed(1)+'s]</span>'
-    d.innerHTML=ts+escHtml(demoLogEntries[demoLogIdx])
+  entries.forEach(function(e){
+    var d=document.createElement('div');d.className='line lv-'+e.l
+    var ts='<span class="ts">['+(e.t/1000).toFixed(1)+'s]</span>'
+    d.innerHTML=ts+escHtml(e.m)
     out.appendChild(d)
+  })
+  if(shouldScroll)out.scrollTop=out.scrollHeight
+}
+function pollLogs(){
+  if(demoLogIdx>=demoLogEntries.length)return;
+  var entries=[]
+  var count=Math.min(3,demoLogEntries.length-demoLogIdx);
+  for(var i=0;i<count;i++){
+    entries.push({l:demoLogIdx%3===0?'I':'D',t:(demoLogIdx+1)*2100,m:demoLogEntries[demoLogIdx]})
     demoLogIdx++
   }
-  if(shouldScroll)out.scrollTop=out.scrollHeight
+  renderTermTo('term-output', entries)
+  renderTermTo('term-output2', entries)
   lastLogCount=demoLogIdx
 }
-function sendCmd(){
-  var inp=$('term-input'),cmd=inp.value.trim()
+function sendCmdTo(inpId, outId){
+  var inp=document.getElementById(inpId),cmd=inp.value.trim()
   if(!cmd){return}
   inp.value=''
-  var out=$('term-output');var ph=out.querySelector('.term-placeholder');if(ph)ph.remove()
+  var out=document.getElementById(outId)
+  if(!out)return
+  var ph=out.querySelector('.term-placeholder');if(ph)ph.remove()
   var d=document.createElement('div');d.className='line lv-V'
   d.innerHTML='<span class="ts">[cmd]</span> $ '+escHtml(cmd)
-  out.appendChild(d);if(termAutoScroll)out.scrollTop=out.scrollHeight
+  out.appendChild(d)
   setTimeout(function(){
     var d2=document.createElement('div');d2.className='line lv-I'
     d2.innerHTML='<span class="ts">[resp]</span> Command "'+escHtml(cmd)+'" executed (simulated)'
-    out.appendChild(d2);if(termAutoScroll)out.scrollTop=out.scrollHeight
+    out.appendChild(d2)
   },300)
 }
-function clearTerm(){
-  var out=$('term-output');out.innerHTML='<div class="term-placeholder">Console cleared.</div>'
+function sendCmd(){sendCmdTo('term-input','term-output')}
+function sendCmd2(){sendCmdTo('term-input2','term-output2')}
+function clearTermTo(outId){
+  var out=document.getElementById(outId)
+  if(out)out.innerHTML='<div class="term-placeholder">Console cleared.</div>'
 }
-function toggleTermScroll(){
+function clearTerm(){clearTermTo('term-output')}
+function clearTerm2(){clearTermTo('term-output2')}
+function toggleTermScrollTo(btnId){
   termAutoScroll=!termAutoScroll
-  $('term-scroll-btn').textContent=termAutoScroll?'\u{1f53d} Auto':'\u{1f53d} Manual'
-  $('term-scroll-btn').style.opacity=termAutoScroll?'1':'.5'
+  var btn=document.getElementById(btnId)
+  if(!btn)return
+  btn.textContent=termAutoScroll?'\u{1f53d} Auto':'\u{1f53d} Manual'
+  btn.style.opacity=termAutoScroll?'1':'.5'
 }
+function toggleTermScroll(){toggleTermScrollTo('term-scroll-btn')}
+function toggleTermScroll2(){toggleTermScrollTo('term-scroll-btn2')}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 /* ---------- Dashboard (simulated) ---------- */

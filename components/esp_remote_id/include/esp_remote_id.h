@@ -36,6 +36,7 @@ typedef struct {
     float altitude_relative;
     float altitude_baro;
     float speed;
+    float speed_vertical;
     int16_t heading;
     uint8_t fix_type;
     uint8_t satellites;
@@ -47,6 +48,9 @@ typedef struct {
     char operator_id[ESP_RID_MAX_STR_LEN + 1];
     uint8_t id_type;
     uint8_t ua_type;
+    char uas_id_2[ESP_RID_MAX_STR_LEN + 1];
+    uint8_t id_type_2;
+    uint8_t ua_type_2;
 } rid_identity_t;
 
 typedef struct {

@@ -29,6 +29,24 @@ static void generate_random_mac(uint8_t mac[6])
     mac[0] &= 0xFE;
 }
 
+static ODID_Horizontal_accuracy_t horiz_acc_from_gps(uint8_t fix_type, uint8_t satellites)
+{
+    if (fix_type >= 4 && satellites >= 15) return ODID_HOR_ACC_1_METER;
+    if (fix_type >= 4 && satellites >= 10) return ODID_HOR_ACC_3_METER;
+    if (fix_type >= 4) return ODID_HOR_ACC_10_METER;
+    if (fix_type >= 3) return ODID_HOR_ACC_10_METER;
+    return ODID_HOR_ACC_30_METER;
+}
+
+static ODID_Vertical_accuracy_t vert_acc_from_gps(uint8_t fix_type, uint8_t satellites)
+{
+    if (fix_type >= 4 && satellites >= 15) return ODID_VER_ACC_3_METER;
+    if (fix_type >= 4 && satellites >= 10) return ODID_VER_ACC_10_METER;
+    if (fix_type >= 4) return ODID_VER_ACC_25_METER;
+    if (fix_type >= 3) return ODID_VER_ACC_25_METER;
+    return ODID_VER_ACC_45_METER;
+}
+
 void wifi_tx_init(void)
 {
     if (g_initialized) return;
@@ -85,9 +103,16 @@ bool wifi_tx_transmit(rid_gps_data_t *gps, rid_identity_t *identity)
     memset(&g_uas_data, 0, sizeof(ODID_UAS_Data));
 
     g_uas_data.BasicIDValid[0] = 1;
-    g_uas_data.BasicID[0].IDType = ODID_IDTYPE_SERIAL_NUMBER;
-    g_uas_data.BasicID[0].UAType = ODID_UATYPE_HELICOPTER_OR_MULTIROTOR;
+    g_uas_data.BasicID[0].IDType = (ODID_idtype_t)identity->id_type;
+    g_uas_data.BasicID[0].UAType = (ODID_uatype_t)identity->ua_type;
     strncpy((char *)g_uas_data.BasicID[0].UASID, identity->uas_id, ODID_ID_SIZE);
+
+    if (identity->uas_id_2[0] != '\0') {
+        g_uas_data.BasicIDValid[1] = 1;
+        g_uas_data.BasicID[1].IDType = (ODID_idtype_t)identity->id_type_2;
+        g_uas_data.BasicID[1].UAType = (ODID_uatype_t)identity->ua_type_2;
+        strncpy((char *)g_uas_data.BasicID[1].UASID, identity->uas_id_2, ODID_ID_SIZE);
+    }
 
     g_uas_data.LocationValid = 1;
     g_uas_data.Location.Latitude = gps->latitude;
@@ -96,9 +121,9 @@ bool wifi_tx_transmit(rid_gps_data_t *gps, rid_identity_t *identity)
     g_uas_data.Location.Height = gps->altitude_relative;
     g_uas_data.Location.SpeedHorizontal = gps->speed;
     g_uas_data.Location.Direction = gps->heading;
-    g_uas_data.Location.SpeedVertical = 0;
-    g_uas_data.Location.HorizAccuracy = ODID_HOR_ACC_30_METER;
-    g_uas_data.Location.VertAccuracy = ODID_VER_ACC_45_METER;
+    g_uas_data.Location.SpeedVertical = gps->speed_vertical;
+    g_uas_data.Location.HorizAccuracy = horiz_acc_from_gps(gps->fix_type, gps->satellites);
+    g_uas_data.Location.VertAccuracy = vert_acc_from_gps(gps->fix_type, gps->satellites);
 
     g_uas_data.SystemValid = 1;
     g_uas_data.System.OperatorLatitude = gps->latitude;
@@ -109,7 +134,7 @@ bool wifi_tx_transmit(rid_gps_data_t *gps, rid_identity_t *identity)
     g_uas_data.OperatorIDValid = 1;
     strncpy((char *)g_uas_data.OperatorID.OperatorId, identity->operator_id, ODID_ID_SIZE);
 
-    uint8_t buffer[1024];
+    static uint8_t buffer[1024];
     int length = odid_wifi_build_message_pack_beacon_frame(
         &g_uas_data, (char *)g_random_mac,
         "ESP-RID", 7, 100, 0,

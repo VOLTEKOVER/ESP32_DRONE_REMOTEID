@@ -18,6 +18,22 @@ static bool g_initialized = false;
 static ODID_UAS_Data g_uas_data;
 static uint8_t g_adv_data[64];
 
+static ODID_Horizontal_accuracy_t ble_horiz_acc(uint8_t fix_type, uint8_t satellites)
+{
+    if (fix_type >= 4 && satellites >= 15) return ODID_HOR_ACC_1_METER;
+    if (fix_type >= 4 && satellites >= 10) return ODID_HOR_ACC_3_METER;
+    if (fix_type >= 3) return ODID_HOR_ACC_10_METER;
+    return ODID_HOR_ACC_30_METER;
+}
+
+static ODID_Vertical_accuracy_t ble_vert_acc(uint8_t fix_type, uint8_t satellites)
+{
+    if (fix_type >= 4 && satellites >= 15) return ODID_VER_ACC_3_METER;
+    if (fix_type >= 4 && satellites >= 10) return ODID_VER_ACC_10_METER;
+    if (fix_type >= 3) return ODID_VER_ACC_25_METER;
+    return ODID_VER_ACC_45_METER;
+}
+
 static void build_legacy_adv(rid_gps_data_t *gps, rid_identity_t *identity, uint8_t *buf, uint16_t *len)
 {
     memset(buf, 0, 64);
@@ -39,15 +55,23 @@ static void build_legacy_adv(rid_gps_data_t *gps, rid_identity_t *identity, uint
     g_uas_data.BasicID[0].UAType = (ODID_uatype_t)identity->ua_type;
     strncpy((char *)g_uas_data.BasicID[0].UASID, identity->uas_id, ODID_ID_SIZE);
 
+    if (identity->uas_id_2[0] != '\0') {
+        g_uas_data.BasicIDValid[1] = 1;
+        g_uas_data.BasicID[1].IDType = (ODID_idtype_t)identity->id_type_2;
+        g_uas_data.BasicID[1].UAType = (ODID_uatype_t)identity->ua_type_2;
+        strncpy((char *)g_uas_data.BasicID[1].UASID, identity->uas_id_2, ODID_ID_SIZE);
+    }
+
     g_uas_data.LocationValid = 1;
     g_uas_data.Location.Latitude = gps->latitude;
     g_uas_data.Location.Longitude = gps->longitude;
     g_uas_data.Location.AltitudeGeo = gps->altitude_msl;
     g_uas_data.Location.Height = gps->altitude_relative;
     g_uas_data.Location.SpeedHorizontal = gps->speed;
+    g_uas_data.Location.SpeedVertical = gps->speed_vertical;
     g_uas_data.Location.Direction = gps->heading;
-    g_uas_data.Location.HorizAccuracy = ODID_HOR_ACC_30_METER;
-    g_uas_data.Location.VertAccuracy = ODID_VER_ACC_45_METER;
+    g_uas_data.Location.HorizAccuracy = ble_horiz_acc(gps->fix_type, gps->satellites);
+    g_uas_data.Location.VertAccuracy = ble_vert_acc(gps->fix_type, gps->satellites);
 
     g_uas_data.SystemValid = 1;
     g_uas_data.System.OperatorLatitude = gps->latitude;

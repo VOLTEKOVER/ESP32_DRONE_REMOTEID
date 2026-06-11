@@ -59,6 +59,13 @@ static void parse_msp_attitude(uint8_t *data, int len)
     g_last_gps.heading = yaw / 10;
 }
 
+static void parse_msp_status(uint8_t *data, int len)
+{
+    if (len < 10) return;
+    uint32_t flag = (uint32_t)(data[6] | (data[7] << 8) | (data[8] << 16) | (data[9] << 24));
+    g_last_gps.armed = (flag & 1) != 0;
+}
+
 static void parse_msp(uint8_t *buf, int len)
 {
     if (len < 6) return;
@@ -83,13 +90,18 @@ static void parse_msp(uint8_t *buf, int len)
     case MSP_ATTITUDE:
         parse_msp_attitude(buf + payload_offset, msp_size);
         break;
+    case MSP_STATUS:
+        parse_msp_status(buf + payload_offset, msp_size);
+        break;
     }
 }
 
 bool msp_parser_get(rid_gps_data_t *gps)
 {
-    uint8_t c;
-    while (uart_read_bytes(UART_MSP, &c, 1, 0) > 0) {
+    uint8_t buf[64];
+    int len = uart_read_bytes(UART_MSP, buf, sizeof(buf), 0);
+    for (int i = 0; i < len; i++) {
+        uint8_t c = buf[i];
         if (c == '$') {
             g_buf_idx = 0;
             g_in_message = true;

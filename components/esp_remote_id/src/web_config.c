@@ -314,9 +314,10 @@ static esp_err_t handle_ota(httpd_req_t *req)
 
 static esp_err_t handle_get_logs(httpd_req_t *req)
 {
-    char buf[4096];
+    char *buf = (char *)malloc(4096);
+    if (!buf) { httpd_resp_send_500(req); return ESP_FAIL; }
     int off = 0;
-    off += snprintf(buf + off, sizeof(buf) - off, "[");
+    off += snprintf(buf + off, 4096 - off, "[");
     if (s_log_lock && xSemaphoreTake(s_log_lock, pdMS_TO_TICKS(50)) == pdTRUE) {
         int n = s_log_count;
         int start = (n < LOG_RING_MAX) ? 0 : s_log_head;
@@ -324,7 +325,6 @@ static esp_err_t handle_get_logs(httpd_req_t *req)
             int idx = (start + i) % LOG_RING_MAX;
             log_entry_t *e = &s_log_ring[idx];
             char lvstr[2] = { e->level, '\0' };
-            /* escape JSON special chars in msg */
             char escaped[LOG_MSG_MAX * 2];
             int eo = 0;
             for (int si = 0; e->msg[si] && eo < (int)sizeof(escaped) - 4; si++) {
@@ -337,17 +337,18 @@ static esp_err_t handle_get_logs(httpd_req_t *req)
                 else escaped[eo++] = c;
             }
             escaped[eo] = '\0';
-            if (i > 0) off += snprintf(buf + off, sizeof(buf) - off, ",");
-            off += snprintf(buf + off, sizeof(buf) - off,
+            if (i > 0) off += snprintf(buf + off, 4096 - off, ",");
+            off += snprintf(buf + off, 4096 - off,
                 "{\"t\":%lu,\"l\":\"%s\",\"m\":\"%s\"}",
                 (unsigned long)e->time_ms, lvstr, escaped);
-            if (off >= (int)sizeof(buf) - 128) { break; }
+            if (off >= 4096 - 128) { break; }
         }
         xSemaphoreGive(s_log_lock);
     }
-    off += snprintf(buf + off, sizeof(buf) - off, "]");
+    off += snprintf(buf + off, 4096 - off, "]");
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, buf, strlen(buf));
+    free(buf);
     return ESP_OK;
 }
 
