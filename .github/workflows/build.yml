@@ -11,6 +11,9 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+env:
+  CCACHE_DIR: /root/.ccache
+
 jobs:
   build:
     name: ${{ matrix.target }}
@@ -31,6 +34,15 @@ jobs:
         with:
           submodules: recursive
 
+      - name: ccache
+        uses: actions/cache@v4
+        with:
+          path: /root/.ccache
+          key: ccache-${{ matrix.target }}-${{ hashFiles('**/sdkconfig', '**/CMakeLists.txt', '**/*.cmake') }}
+          restore-keys: |
+            ccache-${{ matrix.target }}-
+            ccache-
+
       - name: Set target and build
         run: |
           . /opt/esp/idf/export.sh > /dev/null 2>&1
@@ -43,6 +55,7 @@ jobs:
           if [ "${{ matrix.target }}" != "esp32" ]; then
             echo "CONFIG_BT_NIMBLE_ENABLED=y" >> sdkconfig
           fi
+          export CCACHE_BASEDIR="$PWD"
           idf.py build
         shell: bash
 
