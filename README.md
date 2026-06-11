@@ -64,7 +64,7 @@ ESP32_DRONE_ID/
 │   └── webui/               # Embedded web interface (config.html)
 ├── docs/                    # GitHub Pages site (docs, demo, install)
 │   └── config(demo).html    # Standalone config simulator
-├── images/                  # Logo assets — <img src="images/logo.svg" width="18" alt="dragonfly icon"> libellula/dragonfly SVG
+├── images/                  # Logo assets — <img src="images/logo.svg" width="18" alt="icon"> dragonfly SVG
 └── .github/workflows/      # CI/CD
 ```
 

@@ -1,51 +1,51 @@
 # ESP32 Remote ID - Build & Flash Guide
 
-Guida completa per compilare e flashare il progetto ESP-IDF.
+Complete guide to compile and flash the ESP-IDF project.
 
 ## 🚀 Quick Start
 
 ```bash
-# Entrare nel progetto principale
-cd firmware/ESP32_DRONE_ID
+# Enter the main project directory
+cd ESP32_DRONE_ID
 
-# Impostare il target ESP32
+# Set ESP32 target
 idf.py set-target esp32
 
 # Build
 idf.py build
 
-# Flash e monitor (sostituisci COM3 con la tua porta)
+# Flash and monitor (replace COM3 with your port)
 idf.py -p COM3 flash monitor
 ```
 
-## 📋 Prerequisiti
+## 📋 Prerequisites
 
-1. **ESP-IDF installato** (v5.0+)
+1. **ESP-IDF installed** (v5.0+)
    ```bash
-   # Verifica
+   # Verify
    idf.py --version
    ```
 
-2. **ESP32 collegato via USB**
-   - Driver USB installati
-   - Porta COM disponibile
+2. **ESP32 connected via USB**
+   - USB drivers installed
+   - COM port available
 
-3. **Ambiente configurato**
-   - Apri "ESP-IDF CMD Prompt" da Start Menu (Windows)
-   - O esegui `. ./export.sh` su Linux/macOS
+3. **Environment configured**
+   - Open "ESP-IDF CMD Prompt" from Start Menu (Windows)
+   - Or run `. ./export.sh` on Linux/macOS
 
-## 🛠️ Comandi Frequenti
+## 🛠️ Frequent Commands
 
 ### Build
 
 ```bash
-# Build standard
+# Standard build
 idf.py build
 
-# Build con output dettagliato
+# Build with verbose output
 idf.py build -v
 
-# Rebuilding (pulisci prima)
+# Rebuilding (clean first)
 idf.py fullclean
 idf.py build
 ```
@@ -53,65 +53,65 @@ idf.py build
 ### Flashing
 
 ```bash
-# Auto-detect porta
+# Auto-detect port
 idf.py flash
 
-# Porta specifica
+# Specific port
 idf.py -p COM3 flash
 
-# Baud rate personalizzato
+# Custom baud rate
 idf.py -p COM3 -b 460800 flash
 
-# Erase flash prima di flashing
+# Erase flash before flashing
 idf.py erase-flash
 idf.py -p COM3 flash
 ```
 
-### Monitoraggio
+### Monitoring
 
 ```bash
-# Monitor standard
+# Standard monitor
 idf.py monitor
 
-# Con porta specifica
+# With specific port
 idf.py -p COM3 monitor
 
-# Con baud rate personale
+# With custom baud rate
 idf.py -p COM3 -b 115200 monitor
 
-# Esci monitor: Ctrl+]
+# Exit monitor: Ctrl+]
 ```
 
-### Combinato
+### Combined
 
 ```bash
 # Build + Flash + Monitor (3 in 1)
 idf.py -p COM3 build flash monitor
 
-# Uguale ma con velocità
+# Same but with speed
 idf.py -p COM3 -b 921600 build flash monitor
 ```
 
-## 🔌 Ricerca Porta
+## 🔌 Port Discovery
 
 ### Windows (PowerShell)
 
 ```powershell
-# Lista porte COM
+# List COM ports
 Get-WmiObject Win32_SerialPort | Select-Object Name, Description
 
-# Oppure tramite Device Manager:
-# Dispositivi > Porte COM
+# Or via Device Manager:
+# Devices > COM Ports
 ```
 
 ### Linux
 
 ```bash
-# Lista porte
+# List ports
 ls /dev/ttyUSB*
 ls /dev/ttyACM*
 
-# Permessi (se necessario)
+# Permissions (if needed)
 sudo usermod -a -G dialout $USER
 ```
 
@@ -121,17 +121,17 @@ sudo usermod -a -G dialout $USER
 ls /dev/tty.usbserial-*
 ```
 
-## 🔍 Configurazione Progetto
+## 🔍 Project Configuration
 
 ### Menuconfig
 
-Accedi alle opzioni di build:
+Access build options:
 
 ```bash
 idf.py menuconfig
 ```
 
-**Opzioni utili:**
+**Useful options:**
 
 - `Component config` → `ESP32-specific`
   - CPU frequency
@@ -144,25 +144,25 @@ idf.py menuconfig
 
 ### .vscode/settings.json
 
-Configurazione VSCode per il progetto:
+VSCode configuration for the project:
 
 ```json
 {
   "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf",
-  "idf.projectPath": "${workspaceFolder}/firmware/ESP32_DRONE_ID",
+  "idf.projectPath": "${workspaceFolder}",
   "idf.customExtraVars": {
     "IDF_TARGET": "esp32"
   }
 }
 ```
 
-## 📊 Output Build
+## 📊 Build Output
 
-Dopo un build riuscito:
+After a successful build:
 
 ```
-firmware/ESP32_DRONE_ID/build/
-├── esp32-remote-id-scanner.bin      ← Firmware (per flashing)
+build/
+├── esp32-remote-id-scanner.bin      ← Firmware (for flashing)
 ├── esp32-remote-id-scanner.elf      ← Executable (debug)
 ├── bootloader.bin
 ├── partition-table.bin
@@ -170,107 +170,107 @@ firmware/ESP32_DRONE_ID/build/
 └── ...
 ```
 
-### File Importante
+### Important File
 
-**`esp32-remote-id-scanner.bin`** è il file da flashare.
+**`esp32-remote-id-scanner.bin`** is the file to flash.
 
-## 🐛 Risoluzione Problemi
+## 🐛 Troubleshooting
 
 ### "command not found: idf.py"
 
 **Windows:**
 ```powershell
-# Usa il batch file
+# Use the batch file
 %IDF_PATH%\tools\idf.py build
 ```
 
 **Linux/macOS:**
 ```bash
-# Source l'environment
+# Source the environment
 source $IDF_PATH/export.sh
 idf.py build
 ```
 
 ### "Error: CMake 3.22 required"
 
-Aggiorna CMake:
+Update CMake:
 ```bash
-# Tramite ESP-IDF installer
-# O manualmente da cmake.org
+# Via ESP-IDF installer
+# Or manually from cmake.org
 ```
 
 ### "Port COM3 not found"
 
-1. Controlla che ESP32 sia collegato
-2. Verifica in Device Manager / Serial ports
-3. Prova di nuovo dopo riavvio
-4. Controlla driver FTDI/CH340 se necessario
+1. Check that ESP32 is connected
+2. Verify in Device Manager / Serial ports
+3. Try again after reboot
+4. Check FTDI/CH340 driver if needed
 
 ### "Failed to open /dev/ttyUSB0"
 
 Linux/macOS:
 ```bash
 sudo chmod 666 /dev/ttyUSB0
-# O aggiungi l'utente al gruppo
+# Or add user to group
 sudo usermod -a -G dialout $USER
 ```
 
 ### "Brownout detector triggered"
 
-Il device riavvia durante il boot:
-- Alimentazione insufficiente (usa cavo USB di qualità)
-- Prova a disabilitare nel menuconfig
-- Usa PSU esterna
+Device reboots during boot:
+- Insufficient power (use a quality USB cable)
+- Try disabling it in menuconfig
+- Use an external PSU
 
 ### Memory errors "Out of memory"
 
-Aumenta heap:
+Increase heap:
 ```bash
 idf.py menuconfig
 # Component config → Heap → Maximum heap size
 ```
 
-## 📝 Log di Build
+## 📝 Build Log
 
-Salva il log:
+Save the log:
 
 ```bash
 idf.py build 2>&1 | tee build.log
 ```
 
-## 🔐 Sicurezza Flash
+## 🔐 Flash Security
 
 ### Signature & Encryption
 
-Per abilitare secure boot (avanzato):
+To enable secure boot (advanced):
 
 ```bash
 idf.py menuconfig
 # Security features
 ```
 
-### Protezione Lettura
+### Read Protection
 
 ```bash
 idf.py secure-padding-block read_protection enable
 ```
 
-## 📚 Documentazione
+## 📚 Documentation
 
 - [ESP-IDF Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html)
 - [ESP-IDF Components](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system-components.html)
 - [Project Configuration](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/kconfig.html)
 
-## 🚨 Note Importanti
+## 🚨 Important Notes
 
-1. **Sempre** collega ESP32 DOPO aver aperto il terminale
-2. **Non** spegnere il device durante il flash
-3. Usa **cavi USB di qualità** per flashing stabile
-4. Tieni **serial monitor aperto** per debug
+1. **Always** connect ESP32 AFTER opening the terminal
+2. **Do not** power off the device during flash
+3. Use **quality USB cables** for stable flashing
+4. Keep **serial monitor open** for debugging
 
 ## ✨ VSCode Integration
 
-Con l'extension Espressif IDF:
+With the Espressif IDF extension:
 
 1. Command Palette: `ESP-IDF: Build`
 2. Command Palette: `ESP-IDF: Flash`
@@ -278,4 +278,4 @@ Con l'extension Espressif IDF:
 
 ---
 
-**Problemi?** Vedi ENV.md per setup completo.
+**Problems?** See ENV.md for full setup.

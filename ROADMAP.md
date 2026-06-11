@@ -1,11 +1,11 @@
 # ESP Remote ID — Roadmap
 
-## Visione
-Modulo ESP32 universale che trasmette Remote ID (OpenDroneID) per **qualsiasi** drone, leggendo i dati GPS dalla Flight Controller via **MAVLink**, **MSP**, o direttamente dal **GPS** (clone). Configurabile via web.
+## Vision
+Universal ESP32 module that transmits Remote ID (OpenDroneID) for **any** drone, reading GPS data from the Flight Controller via **MAVLink**, **MSP**, or directly from the **GPS** (clone). Configurable via web.
 
 ---
 
-## Architettura
+## Architecture
 
 ```
                     ┌──────────────────────────────────────────┐
@@ -29,52 +29,52 @@ Modulo ESP32 universale che trasmette Remote ID (OpenDroneID) per **qualsiasi** 
 
 ---
 
-## Fasi di Implementazione
+## Implementation Phases
 
-### FASE 1 — Scheletro del progetto
-- [x] Repository base con ESP-IDF
-- [x] Creare componente `esp_remote_id/`
-- [x] Struttura cartelle e CMakeLists
-- [x] Copiare libreria opendroneid-core-c (Intel) + mavlink v2
+### PHASE 1 — Project skeleton
+- [x] Base ESP-IDF repository
+- [x] Create `esp_remote_id/` component
+- [x] Folder structure and CMakeLists
+- [x] Copy opendroneid-core-c (Intel) + mavlink v2 library
 
-### FASE 2 — Parsing protocolli
-- [x] **Autodetect**: riconoscere automaticamente MAVLink/MSP/NMEA su UART
-- [x] **Parser NMEA**: $GPGGA (lat/lon/alt/fix), $GPRMC (speed/status), $GPVTG (heading)
-- [x] **Parser MSP**: MSP_RAW_GPS (106), MSP_ATTITUDE (108) per Betaflight/INAV
-- [x] **Parser MAVLink**: GLOBAL_POSITION_INT, GPS_RAW_INT, VFR_HUD, ATTITUDE
+### PHASE 2 — Protocol parsing
+- [x] **Autodetect**: auto-detect MAVLink/MSP/NMEA on UART
+- [x] **NMEA Parser**: $GPGGA (lat/lon/alt/fix), $GPRMC (speed/status), $GPVTG (heading)
+- [x] **MSP Parser**: MSP_RAW_GPS (106), MSP_ATTITUDE (108) for Betaflight/INAV
+- [x] **MAVLink Parser**: GLOBAL_POSITION_INT, GPS_RAW_INT, VFR_HUD, ATTITUDE
 
-### FASE 3 — Trasmissione OpenDroneID
-- [x] **WiFi Beacon**: frame 802.11 beacon con messaggio ODID via `esp_wifi_80211_tx`
-- [ ] **WiFi NAN**: Neighbor Awareness Networking action frames (beta, disabilitato)
-- [x] **BLE 4.0**: legacy advertising non-connectable (non-configured raw adv)
-- [ ] **BLE 5.0**: coded PHY Long Range (esp_ble_gap_ext_adv — da verificare su HW)
-- [x] **Packer OpenDroneID**: Intel opendroneid.c (odid_message_build_pack)
+### PHASE 3 — OpenDroneID Transmission
+- [x] **WiFi Beacon**: 802.11 beacon frame with ODID message via `esp_wifi_80211_tx`
+- [ ] **WiFi NAN**: Neighbor Awareness Networking action frames (beta, disabled)
+- [x] **BLE 4.0**: legacy non-connectable advertising (non-configured raw adv)
+- [ ] **BLE 5.0**: coded PHY Long Range (esp_ble_gap_ext_adv — needs HW verification)
+- [x] **OpenDroneID Packer**: Intel opendroneid.c (odid_message_build_pack)
 
-### FASE 4 — Configurazione Web
-- [x] Web server HTTP su ESP32 AP (porta 80)
-- [x] Salvataggio parametri in NVS (26 parametri)
-- [x] Pagina configurazione completa: Identità, Trasmissione, WiFi AP, Sistema
-- [x] Pagina stato实时 (GPS fix, conteggi trasmissione)
-- [x] Aggiornamento firmware OTA via web
-- [x] Reset fabbrica via web
+### PHASE 4 — Web Configuration
+- [x] HTTP web server on ESP32 AP (port 80)
+- [x] NVS parameter storage (26 parameters)
+- [x] Full config page: Identity, Transmission, WiFi AP, System
+- [x] Real-time status page (GPS fix, transmission counts)
+- [x] OTA firmware update via web
+- [x] Factory reset via web
 
-### FASE 5 — Integrazione
+### PHASE 5 — Integration
 - [x] Main loop: init → autodetect → parse → transmit
-- [x] Partizione OTA (dual-slot) per aggiornamenti via web
-- [x] CI/CD: GitHub Actions per build automatica su ESP32/S3/C3
-- [ ] Health check e heartbeat
-- [ ] Build & test su HW reale
+- [x] OTA partition (dual-slot) for web updates
+- [x] CI/CD: GitHub Actions for automatic build on ESP32/S3/C3
+- [ ] Health check and heartbeat
+- [ ] Build & test on real HW
 - [ ] Test OTA update
 
 ---
 
-## Struttura File
+## File Structure
 
 ```
 components/esp_remote_id/
 ├── CMakeLists.txt
 ├── include/
-│   ├── esp_remote_id.h         # Header principale (tutti i tipi)
+│   ├── esp_remote_id.h          # Main header (all types)
 │   ├── protocol_detect.h
 │   ├── mavlink_parser.h
 │   ├── msp_parser.h
@@ -83,44 +83,44 @@ components/esp_remote_id/
 │   ├── ble_tx.h
 │   ├── web_config.h
 │   └── nvs_storage.h
-├── mavlink/                    # MAVLink C Library v2 (da ArduRemoteID)
+├── mavlink/                    # MAVLink C Library v2 (from ArduRemoteID)
 │   ├── common/
 │   ├── minimal/
 │   └── ...
 └── src/
-    ├── esp_remote_id.c          # Loop principale + config/state
-    ├── protocol_detect.c        # Autodetect protocollo
-    ├── mavlink_parser.c         # Parsing messaggi MAVLink GPS
-    ├── msp_parser.c             # Parsing MSP (Betaflight/INAV)
-    ├── nmea_parser.c            # Parsing NMEA (GPS clone)
+    ├── esp_remote_id.c          # Main loop + config/state
+    ├── protocol_detect.c        # Protocol auto-detect
+    ├── mavlink_parser.c         # MAVLink GPS message parsing
+    ├── msp_parser.c             # MSP parsing (Betaflight/INAV)
+    ├── nmea_parser.c            # NMEA parsing (GPS clone)
     ├── wifi_tx.c                # WiFi Beacon TX (Intel odid_wifi_build)
     ├── ble_tx.c                 # BLE 4.0 + BLE 5.0 advertising
     ├── web_config.c             # HTTP server + REST API + OTA
-    └── nvs_storage.c            # NVS persistenza parametri
+    └── nvs_storage.c            # NVS parameter persistence
 ```
 
-### Dipendenze da Intel opendroneid-core-c
+### Dependencies from Intel opendroneid-core-c
 
-| File sorgente | Cosa fornisce |
+| Source File | Provides |
 |---|---|
-| `libopendroneid/opendroneid.c` + `.h` | Codifica/decodifica messaggi ODID |
-| `libopendroneid/wifi.c` | Frame WiFi 802.11 beacon/NAN + message_pack |
-| `libmav2odid/mav2odid.c` + `.h` | Conversione MAVLink ←→ ODID |
+| `libopendroneid/opendroneid.c` + `.h` | ODID message encode/decode |
+| `libopendroneid/wifi.c` | WiFi 802.11 beacon/NAN frames + message_pack |
+| `libmav2odid/mav2odid.c` + `.h` | MAVLink ←→ ODID conversion |
 | `mavlink_c_library_v2/` | MAVLink v2 headers (common, minimal, ardupilotmega) |
 
-### Cosa SCRITTO da zero (nuovo, non in ArduRemoteID)
+### Written from scratch (new, not in ArduRemoteID)
 
-| File | Perché |
+| File | Why |
 |---|---|
-| `msp_parser.c` | Betaflight/INAV usano MSP, non supportato da ArduRemoteID |
-| `nmea_parser.c` | Lettura diretta GPS clone. Nuova feature. |
-| `protocol_detect.c` | Autodetect del protocollo in ingresso. Nuova feature. |
+| `msp_parser.c` | Betaflight/INAV use MSP, not supported by ArduRemoteID |
+| `nmea_parser.c` | Direct GPS clone reading. New feature. |
+| `protocol_detect.c` | Incoming protocol auto-detect. New feature. |
 
 ---
 
-## Parametri Configurabili (26 totali)
+## Configurable Parameters (26 total)
 
-| Parametro | Tipo | Default | Range |
+| Parameter | Type | Default | Range |
 |---|---|---|---|
 | UAS ID | string | "ESP32-RID-001" | 20 char |
 | ID Type | uint8 | 1 (Serial) | 0-4 |
@@ -139,22 +139,22 @@ components/esp_remote_id/
 | BLE 5.0 Rate | float | 1.0 Hz | 0-5 Hz |
 | BLE 5.0 Power | float | 18 dBm | -27..18 dBm |
 | WiFi SSID | string | "ESP-RID" | 20 char |
-| WiFi Password | string | "" (aperto) | 20 char |
+| WiFi Password | string | "" (open) | 20 char |
 | Web Server | uint8 | 1 (on) | 0-1 |
 | MAVLink SysID | uint8 | 0 (auto) | 0-254 |
-| Broadcast senza GPS | uint8 | 1 (on) | 0-1 |
+| Broadcast without GPS | uint8 | 1 (on) | 0-1 |
 | Lock Level | int8 | 0 | -1..2 |
 | Options bitmask | uint8 | 0 | 0-7 |
 | Public Key 1-5 | string | "" | 64 char |
 
 ---
 
-## Note Importanti
+## Important Notes
 
-- **Build**: `idf.py build flash monitor` (richiede ESP-IDF v6.0.1 in `C:\esp\v6.0.1\`); oppure via GitHub Actions (push su main)
-- **Config**: Aprire `http://192.168.4.1` dopo aver connesso il WiFi all'AP "ESP-RID"
-- **OTA**: Caricare firmware .bin dalla pagina web (`/ota`); partizione custom `partitions.csv` (dual-slot)
-- **CI**: Workflow `.github/workflows/build.yml` compila per ESP32, ESP32-S3, ESP32-C3 e crea nightly release
-- **Antenna**: Usare modulo con connettore U.FL (carbonio scherma antenna PCB)
-- **Resistenza sdoppio GPS**: Mettere 1kΩ in serie sul ramo verso l'ESP32
-- **BLE 5.0**: Richiede HW con supporto Coded PHY (ESP32-C3, ESP32-S3)
+- **Build**: `idf.py build flash monitor` (requires ESP-IDF v6.0.1 in `C:\esp\v6.0.1\`); or via GitHub Actions (push to main)
+- **Config**: Open `http://192.168.4.1` after connecting WiFi to the "ESP-RID" AP
+- **OTA**: Upload firmware .bin from the web page (`/ota`); custom `partitions.csv` (dual-slot)
+- **CI**: Workflow `.github/workflows/build.yml` builds for ESP32, ESP32-S3, ESP32-C3 and creates nightly release
+- **Antenna**: Use module with U.FL connector (carbon shields PCB antenna)
+- **GPS split resistor**: Place 1kΩ series resistor on the branch toward ESP32
+- **BLE 5.0**: Requires HW with Coded PHY support (ESP32-C3, ESP32-S3)
