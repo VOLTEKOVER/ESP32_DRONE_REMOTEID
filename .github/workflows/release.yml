@@ -113,23 +113,58 @@ jobs:
 
       - name: Generate release notes
         run: |
-          cat > release-notes.md << 'EOF'
-          ## ESP Remote ID v${{ env.VERSION }}
+          VERSION=${{ env.VERSION }}
+          cat > release-notes.md << EOF
+          # ESP Remote ID v${VERSION}
 
-          See https://valeriocomo.github.io/ESP32_DRONE_ID/ for flashing instructions.
+          Open DroneID transmitter for ESP32 — ASTM F3411-22a / ASD-STAN prEN 4709-002.
 
-          **Downloads:**
-          - `firmware-${{ env.VERSION }}.zip` — all targets
-          - `manifest.json` — esptool-web installer
+          **Targets:** ESP32 · ESP32-S3 · ESP32-C3
 
-          ### Changes
+          ---
+
+          ## 📥 Downloads
+
+          | File | Description |
+          |------|-------------|
+          | \`firmware-${VERSION}.zip\` | All targets (bootloader + partition + firmware) |
+          | \`manifest.json\` | WebSerial installer manifest |
+
+          > 💡 Flash via browser at https://valeriocomo.github.io/ESP32_DRONE_ID/
+
+          ## ✨ What's Changed
           EOF
+
           PREV=$(git tag --sort=-version:refname | head -2 | tail -1)
-          if [ -n "$PREV" ]; then
+          if [ -z "$PREV" ]; then
             echo "" >> release-notes.md
-            echo "**Commits since $PREV:**" >> release-notes.md
+            echo "*(initial release)*" >> release-notes.md
+          else
+            echo "" >> release-notes.md
+            echo "### 🚀 Features" >> release-notes.md
+            git log "$PREV.." --grep="^feat" --format="  - %s" >> release-notes.md || true
+            echo "" >> release-notes.md
+            echo "### 🐛 Fixes" >> release-notes.md
+            git log "$PREV.." --grep="^fix" --format="  - %s" >> release-notes.md || true
+            echo "" >> release-notes.md
+            echo "### 🛠 Improvements" >> release-notes.md
+            git log "$PREV.." --grep="^improve\|^perf\|^refactor\|^optimize" -i --format="  - %s" >> release-notes.md || true
+            echo "" >> release-notes.md
+            echo "### 📚 Documentation" >> release-notes.md
+            git log "$PREV.." --grep="^docs\|^readme\|^convert" -i --format="  - %s" >> release-notes.md || true
+            echo "" >> release-notes.md
+            echo "### 🧹 Chores" >> release-notes.md
+            git log "$PREV.." --grep="^chore\|^cleanup\|^remove\|^rm\b" -i --format="  - %s" >> release-notes.md || true
+            echo "" >> release-notes.md
+            echo "### 🔄 Full Commit Log" >> release-notes.md
+            echo '```' >> release-notes.md
             git log --oneline "$PREV.." >> release-notes.md
+            echo '```' >> release-notes.md
           fi
+
+          echo "" >> release-notes.md
+          echo "---" >> release-notes.md
+          echo "_Full documentation at https://valeriocomo.github.io/ESP32_DRONE_ID/_" >> release-notes.md
         shell: bash
 
       - name: Create Release
