@@ -74,7 +74,7 @@ static void default_config(rid_config_t *cfg)
 
 void esp_rid_init(void)
 {
-    ESP_LOGI(TAG, "ESP Remote ID v%s initializing", ESP_RID_VERSION);
+    ESP_LOGI(TAG, "ESP DRONE REMOTEID v%s initializing", ESP_RID_VERSION);
 
     default_config(&g_config);
     memset(&g_state, 0, sizeof(rid_state_t));

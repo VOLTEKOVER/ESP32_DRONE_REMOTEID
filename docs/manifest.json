@@ -1,7 +1,7 @@
 {
   "name": "ESP Remote ID",
   "version": "0.1.0-dev",
-  "home_url": "https://voltekover.github.io/ESP32_DRONE_ID",
+  "home_url": "https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID",
   "config_url": "http://192.168.4.1",
   "new_install_improv_wait_time": 0,
   "builds": [
@@ -10,7 +10,7 @@
       "parts": [
         { "path": "firmware/esp32/bootloader.bin", "offset": 0x1000 },
         { "path": "firmware/esp32/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32/esp32-remote-id-scanner.bin", "offset": 0x20000 }
+        { "path": "firmware/esp32/esp-drone-remoteid.bin", "offset": 0x20000 }
       ]
     },
     {
@@ -18,7 +18,7 @@
       "parts": [
         { "path": "firmware/esp32s3/bootloader.bin", "offset": 0x0 },
         { "path": "firmware/esp32s3/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
+        { "path": "firmware/esp32s3/esp-drone-remoteid.bin", "offset": 0x20000 }
       ]
     },
     {
@@ -26,7 +26,7 @@
       "parts": [
         { "path": "firmware/esp32c3/bootloader.bin", "offset": 0x0 },
         { "path": "firmware/esp32c3/partition-table.bin", "offset": 0x8000 },
-        { "path": "firmware/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
+        { "path": "firmware/esp32c3/esp-drone-remoteid.bin", "offset": 0x20000 }
       ]
     }
   ]

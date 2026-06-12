@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESP Remote ID [BETA] — Configuration</title>
+<title>ESP DRONE REMOTEID — Configuration</title>
 <style>
 :root{--bg:#f2f2f2;--card-bg:#fff;--card-border:#d4d4d4;--txt:#222;--txt-sec:#666;--txt-muted:#999;--line:#ddd;--hover:#f0f0f0;--input-bg:#fff;--input-border:#d0d0d0;--shadow:rgba(0,0,0,.06);--accent:#222}
 @media(prefers-color-scheme:dark){
@@ -12,8 +12,9 @@
 [data-theme="dark"]{--bg:#121212;--card-bg:#1e1e1e;--card-border:#333;--txt:#e0e0e0;--txt-sec:#aaa;--txt-muted:#777;--line:#333;--hover:#2a2a2a;--input-bg:#2a2a2a;--input-border:#444;--shadow:rgba(0,0,0,.2);--accent:#fff}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);padding:20px}
-.logo-img{height:50px;flex-shrink:0}
-@media(prefers-color-scheme:dark){.logo-img{filter:invert(1)}}[data-theme="dark"] .logo-img{filter:invert(1)}
+.logo-txt{font-size:1.25em;font-weight:700;letter-spacing:-.3px;background:linear-gradient(135deg,#1565c0,#2e7d32);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+[data-theme="dark"] .logo-txt{background:linear-gradient(135deg,#42a5f5,#66bb6a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-txt .sub{font-weight:400;font-size:.5em;display:block;letter-spacing:1px;color:var(--txt-muted);-webkit-text-fill-color:var(--txt-muted)}
 @media(prefers-color-scheme:dark){.tag-stable{background:#152d15;color:#5a9e5a;border-color:#2e5a2e}}[data-theme="dark"] .tag-stable{background:#152d15;color:#5a9e5a;border-color:#2e5a2e}
 @media(prefers-color-scheme:dark){.tag-beta{background:#2a2000;color:#e0b000;border-color:#665000}}[data-theme="dark"] .tag-beta{background:#2a2000;color:#e0b000;border-color:#665000}
 @media(prefers-color-scheme:dark){.tag-na{background:#1e1e1e;color:#666;border-color:#333}}[data-theme="dark"] .tag-na{background:#1e1e1e;color:#666;border-color:#333}
@@ -228,8 +229,8 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="toast-center" id="toast-center"></div>
 
 <div class="hdr">
-<a href="https://github.com/voltekover/ESP32_DRONE_ID" target="_blank" class="brand">
-<img class="logo-img" src="../../../images/logo%20con%20scritta.svg" alt="ESP Remote ID">
+<a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" target="_blank" class="brand">
+<span class="logo-txt">ESP DRONE REMOTEID<span class="sub">Open DroneID Transmitter</span></span>
 </a>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <div class="badge" id="status-badge"><span class="health-dot" id="health-dot"></span> Connecting...</div>
@@ -242,7 +243,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <button class="hdr-btn" onclick="exportCfg()">&#x1f4e5; Export</button>
 <button class="hdr-btn" onclick="document.getElementById('import-file').click()">&#x1f4e4; Import</button>
 <input type="file" id="import-file" accept=".json" style="display:none" onchange="importCfg(this)">
-<a href="https://github.com/voltekover/ESP32_DRONE_ID" target="_blank" class="hdr-btn github">GitHub</a>
+<a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" target="_blank" class="hdr-btn github">GitHub</a>
 <button id="dark-toggle" onclick="toggleDark()" class="hdr-btn" style="font-size:.9em;padding:4px 8px" title="Toggle dark mode">&#x263e;</button>
 </div>
 </div>
@@ -255,7 +256,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div id="view-dashboard" class="view">
 <div class="dash">
 <div class="dash-hdr">
-<h2>&#x1f4ca; ESP Remote ID Dashboard</h2>
+<h2>&#x1f4ca; ESP DRONE REMOTEID Dashboard</h2>
 <div>
 <span class="dash-badge live" id="dash-status-badge">&#x25cf; LIVE</span>
 <button class="dash-btn-config" onclick="setView('advanced')" style="margin-left:8px">&#x2699; Configure</button>
@@ -340,7 +341,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f1">
 <div class="guide">
 <b>Basic ID</b> &mdash; The UAS ID identifies your drone to receivers. Use a serial number (ANSI/CTA-2063) or your CAA registration number, max 20 characters. The UA Type must match your aircraft.
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>UAS ID</label>
@@ -396,7 +397,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f2">
 <div class="guide">
 <b>Tx Modes</b> &mdash; Select which radio technologies to broadcast on. WiFi Beacon is the most compatible. BLE 5.0 Coded PHY offers longer range. Rates are in Hz (packets per second).
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>Enabled Channels</label>
@@ -448,7 +449,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f3">
 <div class="guide">
 <b>Access Point</b> &mdash; Configure the ESP32's management WiFi network. After connecting to <code>ESP-RID</code>, open <code>http://192.168.4.1</code> in your browser. Set the UART baud rate to match your flight controller.
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>WiFi SSID</label>
@@ -502,7 +503,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f4">
 <div class="guide">
 <b>Security &amp; Options</b> &mdash; Lock level 0 is normal. Level 1 restricts to signed commands. Level 2 burns efuses permanently. Public keys enable signed command authentication.
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-security" target="_blank">Wiki &rarr;</a>
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-security" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>Lock Level <span class="tag tag-warning">Dangerous</span></label>
@@ -536,8 +537,8 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="card">
 <h2><span class="ico">&#x1f4ca;</span> Status &amp; Console <span class="tag tag-stable">Stable</span></h2>
 <div class="guide">
-Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seconds. Status shows GPS data and transmission counters. Console captures real-time log output from the device.
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-webui" target="_blank">Wiki &rarr;</a>
+Live telemetry and serial console from the ESP DRONE REMOTEID. Refreshes every 2 seconds. Status shows GPS data and transmission counters. Console captures real-time log output from the device.
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-webui" target="_blank">Wiki &rarr;</a>
 </div>
 
 <div class="term-container">
@@ -568,7 +569,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 <h2><span class="ico">&#x1f4e4;</span> Firmware Update <span class="tag tag-warning">Warning</span></h2>
 <div class="guide" style="border-left-color:#c62828">
 &#x26a0; Upload a firmware <code>.bin</code> file to update over-the-air. <strong>Do NOT disconnect power during the update.</strong> The device reboots automatically. Use the correct .bin for your ESP32 model.
-<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-ota" target="_blank">Wiki &rarr;</a>
+<a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-ota" target="_blank">Wiki &rarr;</a>
 </div>
 <div class="ota-zone" id="ota-zone">
 <div class="ico-big">&#x1f4c1;</div>
@@ -594,7 +595,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 </div>
 </div>
 
-<div class="footer">&mdash; ESP Remote ID [BETA] v1.0.0 &mdash; <a href="https://github.com/voltekover/ESP32_DRONE_ID">GitHub</a> &mdash; <a href="https://voltekover.github.io/ESP32_DRONE_ID/">Wiki</a></div>
+<div class="footer">&mdash; ESP DRONE REMOTEID v1.0.0 &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">GitHub</a> &mdash; <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">Wiki</a></div>
 
 </div>
 
@@ -855,7 +856,7 @@ $('tx_ble5').checked=!!(c.tx_modes&8)
   applyDeviceConstraints();
 }).catch(function(){
   document.querySelectorAll('input,select').forEach(function(el){el.style.opacity=''})
-  showMsg('Cannot connect to ESP Remote ID. Make sure you are connected to the device WiFi.',1)
+  showMsg('Cannot connect to ESP DRONE REMOTEID. Make sure you are connected to the device WiFi.',1)
 })}
 
 function collectForm(){return{

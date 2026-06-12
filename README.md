@@ -3,11 +3,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/VOLTEKOVER/ESP32_DRONE_ID/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/VOLTEKOVER/ESP32_DRONE_ID/build.yml?logo=github&label=build" alt="Build"></a>
-  <a href="https://voltekover.github.io/ESP32_DRONE_ID/"><img src="https://img.shields.io/badge/web%20flasher-000?logo=esphome" alt="Web Flasher"></a>
-  <a href="https://github.com/VOLTEKOVER/ESP32_DRONE_ID/releases"><img src="https://img.shields.io/github/v/release/VOLTEKOVER/ESP32_DRONE_ID?include_prereleases&logo=github" alt="Release"></a>
+  <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/actions/workflows/build.yml"><img src="https://img.shields.io/github/actions/workflow/status/VOLTEKOVER/ESP_DRONE_REMOTEID/build.yml?logo=github&label=build" alt="Build"></a>
+  <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/"><img src="https://img.shields.io/badge/web%20flasher-000?logo=esphome" alt="Web Flasher"></a>
+  <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/releases"><img src="https://img.shields.io/github/v/release/VOLTEKOVER/ESP_DRONE_REMOTEID?include_prereleases&logo=github" alt="Release"></a>
   <a href="https://www.espressif.com/"><img src="https://img.shields.io/badge/ESP32%20%7C%20S3%20%7C%20C3-000?logo=espressif" alt="Platform"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/VOLTEKOVER/ESP32_DRONE_ID?color=blue" alt="License"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/VOLTEKOVER/ESP_DRONE_REMOTEID?color=blue" alt="License"></a>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://voltekover.github.io/ESP32_DRONE_ID/"><b>Web Installer & Docs</b></a>
+  <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/"><b>Web Installer & Docs</b></a>
 </p>
 
 ---
@@ -32,7 +32,7 @@
 | Step | Action |
 |------|--------|
 | 1 | Connect ESP32 to USB |
-| 2 | Open [voltekover.github.io/ESP32_DRONE_ID](https://voltekover.github.io/ESP32_DRONE_ID/) |
+| 2 | Open [VOLTEKOVER.github.io/ESP_DRONE_REMOTEID](https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/) |
 | 3 | Select your chip (**ESP32** / **ESP32-S3** / **ESP32-C3**) |
 | 4 | Click **Install**, pick serial port |
 | 5 | Power from battery, connect to WiFi **ESP-RID** |
@@ -66,13 +66,13 @@ No toolchain required &mdash; works in Chrome/Edge via WebSerial.
 ## Build
 
 Push to `main` &rarr; automatic build for all 3 targets via GitHub Actions.  
-[See latest builds](https://github.com/VOLTEKOVER/ESP32_DRONE_ID/actions/workflows/build.yml)
+[See latest builds](https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/actions/workflows/build.yml)
 
 ### Locally (ESP-IDF v6.0.1)
 
 ```bash
-git clone https://github.com/VOLTEKOVER/ESP32_DRONE_ID.git
-cd ESP32_DRONE_ID
+git clone https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID.git
+cd ESP_DRONE_REMOTEID
 idf.py set-target esp32    # or esp32s3 / esp32c3
 idf.py build flash monitor
 ```
@@ -80,7 +80,7 @@ idf.py build flash monitor
 ## Project Structure
 
 ```
-ESP32_DRONE_ID/
+ESP_DRONE_REMOTEID/
 ├── main/                    # Entry point (app_main)
 ├── components/esp_remote_id/# Core: protocol detect, web UI, NVS config
 │   └── webui/config.html    # Embedded web interface

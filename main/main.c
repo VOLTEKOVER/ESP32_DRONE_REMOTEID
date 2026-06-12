@@ -65,7 +65,7 @@ static void print_splash(void)
     printf("  \xE2\x95\x91 |   / _|| |\\/| | () || | | _|    | || |) |                         \xE2\x95\x91\n");
     printf("  \xE2\x95\x91 |_|_\\___|_|  |_|\\___/|_| |___|  |___|___/                          \xE2\x95\x91\n");
     printf("  \xE2\x95\x91                                                                  \xE2\x95\x91\n");
-    printf("  \xE2\x95\x91  Remote ID Transmitter for FPV / Drones                           \xE2\x95\x91\n");
+    printf("  \xE2\x95\x91  ESP DRONE REMOTEID — Open DroneID Transmitter                    \xE2\x95\x91\n");
     printf("  \xE2\x95\x91                                                                  \xE2\x95\x91\n");
     printf(C_GRN);
     printf("  \xE2\x95\x91  v%-12s                   ASTM F3411-22a                   \xE2\x95\x91\n", ESP_RID_VERSION);

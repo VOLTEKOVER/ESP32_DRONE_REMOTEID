@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # Set project name
-set(PROJECT_NAME esp32-remote-id-scanner)
+set(PROJECT_NAME esp-drone-remoteid)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
