@@ -316,6 +316,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
 <button class="btn-sm" onclick="copyTerm('term-output2')" title="Copy console">&#x1f4cb; Copy</button>
+<button class="btn-sm" onclick="copyAllLogs()" title="Copy all logs from device">&#x1f4cb; All</button>
 <button class="btn-sm" onclick="clearTerm2()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn2" onclick="toggleTermScroll2()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -547,6 +548,7 @@ Live telemetry and serial console from the ESP DRONE REMOTEID. Refreshes every 2
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
 <button class="btn-sm" onclick="copyTerm('term-output')" title="Copy console">&#x1f4cb; Copy</button>
+<button class="btn-sm" onclick="copyAllLogs()" title="Copy all logs from device">&#x1f4cb; All</button>
 <button class="btn-sm" onclick="clearTerm()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn" onclick="toggleTermScroll()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -597,7 +599,7 @@ Live telemetry and serial console from the ESP DRONE REMOTEID. Refreshes every 2
 </div>
 </div>
 
-<div class="footer">&mdash; ESP DRONE REMOTEID v1.0.0 &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">GitHub</a> &mdash; <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">Wiki</a></div>
+<div class="footer">&mdash; ESP DRONE REMOTEID v0.0.1-dev &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">GitHub</a> &mdash; <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">Wiki</a></div>
 
 </div>
 
@@ -1054,6 +1056,17 @@ function copyTerm(outId){
   if(!txt){showMsg('Nothing to copy',1);return}
   navigator.clipboard.writeText(txt).then(function(){showMsg('Console copied ('+txt.split('\n').length+' lines)')}).catch(function(){showMsg('Failed to copy',1)})
 }
+function copyAllLogs(){
+  fetch('/api/logs').then(function(r){return r.json()}).then(function(entries){
+    if(!entries||entries.length===0){showMsg('No logs available',1);return}
+    var txt='',lvMap={I:'INFO',W:'WARN',E:'ERROR',D:'DEBUG',V:'VERBOSE'}
+    entries.forEach(function(e){
+      var lv=lvMap[e.l]||e.l
+      txt+='['+(e.t/1000).toFixed(1)+'s] ['+lv+'] '+e.m+'\n'
+    })
+    navigator.clipboard.writeText(txt).then(function(){showMsg('All logs copied ('+entries.length+' lines)')}).catch(function(){showMsg('Failed to copy',1)})
+  }).catch(function(){showMsg('Failed to fetch logs',1)})
+}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 /* ---------- Dashboard ---------- */
@@ -1106,7 +1119,7 @@ setInterval(function(){
           timeoutWarningShown=false
   var h=document.createElement('div');h.className='status-grid'
   function addRow(l,v){var a=document.createElement('div');a.className='sg-label';a.textContent=l;h.appendChild(a);var b=document.createElement('div');b.className='sg-val';b.textContent=v;h.appendChild(b)}
-  addRow('Firmware',s.fw_version||'v1.0.0-beta')
+  addRow('Firmware',s.fw_version||'v0.0.1-dev')
   addRow('Protocol',['Unknown','MAVLink','MSP','NMEA','None'][s.protocol])
   var gpsEl=document.createElement('div');gpsEl.className='sg-label';gpsEl.textContent='GPS';h.appendChild(gpsEl)
   var gpsVal=document.createElement('div');gpsVal.className='sg-val'

@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="ESP Remote ID — universal Open DroneID transmitter for ESP32/ESP32-S3/ESP32-C3. ASTM F3411-22a compliant WiFi Beacon and BLE Remote ID. WebSerial installer &amp; wiki.">
-<meta property="og:title" content="ESP Remote ID [BETA] — Open DroneID Transmitter">
-<meta property="og:description" content="Universal ASTM F3411-22a Open DroneID transmitter for ESP32 — WiFi Beacon, BLE 4.0/5.0, MAVLink, MSP, NMEA. WebSerial installer &amp; complete guide.">
+<meta name="description" content="ESP DRONE REMOTEID [DEV] — Open DroneID transmitter for ESP32/ESP32-S3/ESP32-C3. ASTM F3411-22a WiFi Beacon and BLE Remote ID. Code complete, hardware testing pending.">
+<meta property="og:title" content="ESP DRONE REMOTEID [DEV] — Open DroneID Transmitter">
+<meta property="og:description" content="Open DroneID transmitter for ESP32 — WiFi Beacon, BLE 4.0/5.0, MAVLink, MSP, NMEA. Development build, hardware testing pending.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ESP Remote ID [BETA]">
-<meta name="twitter:description" content="Open DroneID transmitter for ESP32 — WiFi Beacon &amp; BLE. WebSerial installer.">
+<meta name="twitter:title" content="ESP DRONE REMOTEID [DEV]">
+<meta name="twitter:description" content="Open DroneID transmitter for ESP32 — WiFi Beacon &amp; BLE. Development build.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 56 56'><rect width='56' height='56' rx='12' fill='%23222'/><ellipse cx='28' cy='29' rx='2.2' ry='13' fill='%23fff'/></svg>">
-<title>ESP Remote ID [BETA] — Open DroneID Transmitter</title>
+<title>ESP DRONE REMOTEID [DEV] — Open DroneID Transmitter</title>
 <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 <script async defer src="https://buttons.github.io/buttons.js"></script>
 <style>
@@ -314,8 +314,8 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 
 <header>
 <div class="wrap">
-<a href="#" class="brand" aria-label="ESP Remote ID home">
-<img class="logo-img" src="images/logo%20con%20scritta.svg" alt="ESP Remote ID">
+<a href="#" class="brand" aria-label="ESP DRONE REMOTEID home">
+<img class="logo-img" src="images/logo%20con%20scritta.svg" alt="ESP DRONE REMOTEID">
 </a>
 <nav aria-label="Main navigation">
 <a href="#build">Install</a>
@@ -331,27 +331,27 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 
 <div class="wrap">
 <div class="hero">
-<img class="logo-hero" src="images/logo.svg" alt="ESP Remote ID">
-<h1>ESP Remote ID <span style="font-size:.5em;color:#f57f17;font-weight:700">[BETA]</span></h1>
+<img class="logo-hero" src="images/logo.svg" alt="ESP DRONE REMOTEID">
+<h1>ESP DRONE REMOTEID <span style="font-size:.5em;color:#c62828;font-weight:700">[DEV]</span></h1>
 <p>Universal ASTM F3411-22a Open DroneID transmitter &mdash; WiFi Beacon &middot; BLE 4.0/5.0 &middot; MAVLink &middot; MSP &middot; NMEA</p>
-<div class="version-bar">v1.0.0-beta &mdash; Latest: <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/releases">v1.0.0</a> &middot; Apr 2026</div>
+<div class="version-bar" style="border-color:#c62828;background:#fdecea;color:#c62828">&#x26a0; DEVELOPMENT BUILD &mdash; v0.0.1-dev &middot; Code written, no flight testing performed yet</div>
 <div class="gh-btns">
   <a class="github-button" href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" data-show-count="true" data-size="large" aria-label="Star VOLTEKOVER/ESP_DRONE_REMOTEID on GitHub">Star</a>
   <a class="github-button" href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/fork" data-show-count="true" data-size="large" aria-label="Fork VOLTEKOVER/ESP_DRONE_REMOTEID on GitHub">Fork</a>
 </div>
 <div class="compat-bar">
-  <span class="compat-label">Compatible with</span>
+  <span class="compat-label">Target protocols</span>
   <span class="compat-item ap">
     <img src="images/ardupilot_logo.webp" alt="ArduPilot" height="28">
-    ArduPilot
+    MAVLink
   </span>
   <span class="compat-item bf">
     <img src="images/betaflight_logo.svg" alt="Betaflight" height="28">
-    Betaflight
+    MSP
   </span>
   <span class="compat-item inav">
     <img src="images/inav_logo.png" alt="INAV" height="28">
-    INAV
+    NMEA
   </span>
 </div>
 </div>
@@ -359,62 +359,9 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 <!-- RELEASE BAR -->
 <div class="release-bar">
 <div class="rl-wrap">
-<div class="rl-timeline">
-<div class="rl-milestone" style="left:10%">
-<div class="rl-dot"></div>
-<div class="rl-ver">v0.5</div>
-<div class="rl-label">Alpha</div>
-<div class="rl-date">Jan 2026</div>
+<div style="padding:12px 0;text-align:center">
+  <span style="font-size:.85em;color:#888">&#x1f6a7; The project is in early development. All code has been written but <b>no hardware testing has been performed yet</b>. Features listed below are implemented in code and may work, but have not been verified on real hardware.</span>
 </div>
-<div class="rl-milestone" style="left:30%">
-<div class="rl-dot"></div>
-<div class="rl-ver">v0.9</div>
-<div class="rl-label">Beta RC</div>
-<div class="rl-date">Mar 2026</div>
-</div>
-<div class="rl-milestone active" style="left:50%">
-<div class="rl-dot"></div>
-<div class="rl-ver">v1.0.0-beta</div>
-<div class="rl-label">Current</div>
-<div class="rl-date">Apr 2026</div>
-</div>
-<div class="rl-milestone future" style="left:72%">
-<div class="rl-dot"></div>
-<div class="rl-ver">v1.0.0</div>
-<div class="rl-label">Stable</div>
-<div class="rl-date">TBD</div>
-</div>
-<div class="rl-milestone future" style="left:90%">
-<div class="rl-dot"></div>
-<div class="rl-ver">v1.1</div>
-<div class="rl-label">Future</div>
-<div class="rl-date">TBD</div>
-</div>
-</div>
-<div class="rl-track"><div class="rl-progress" style="width:50%"></div></div>
-</div>
-<div class="rl-changelog">
-<div class="rl-cl-entry">
-<span class="rl-cl-tag rl-feat">feat</span>
-<span>BLE 5.0 Coded PHY support (ESP32-S3/C3)</span>
-</div>
-<div class="rl-cl-entry">
-<span class="rl-cl-tag rl-feat">feat</span>
-<span>Automatic protocol detection (MAVLink/MSP/NMEA)</span>
-</div>
-<div class="rl-cl-entry">
-<span class="rl-cl-tag rl-feat">feat</span>
-<span>Web-based configurator with real-time telemetry dashboard</span>
-</div>
-<div class="rl-cl-entry">
-<span class="rl-cl-tag rl-fix">fix</span>
-<span>GPS parsing stability across all input protocols</span>
-</div>
-<div class="rl-cl-entry">
-<span class="rl-cl-tag rl-chore">chore</span>
-<span>CI/CD pipeline with ccache, automated release, GitHub Pages deploy</span>
-</div>
-<div class="rl-cl-more"><a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/releases">All releases &rarr;</a></div>
 </div>
 </div>
 
@@ -424,7 +371,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 <p>Install via browser &mdash; no tools required.</p>
 <div class="install-box">
 <div class="mini-logo">
-<img class="logo-mini" src="images/logo.svg" alt="ESP Remote ID">
+<img class="logo-mini" src="images/logo.svg" alt="ESP DRONE REMOTEID">
 <p class="sub">Select your device &amp; install</p>
 <div class="chip-selector" id="chip-selector">
   <label class="chip-option active">
@@ -443,7 +390,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 <esp-web-install-button id="install-button" manifest="manifest.json"></esp-web-install-button>
 </div>
 <div class="steps-box">
-<h4>Quick Start</h4>
+<h4>Quick Start (once hardware testing is complete)</h4>
 <ol>
 <li>Connect ESP32 to computer via USB</li>
 <li>Click install &amp; select serial port</li>
@@ -453,7 +400,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 <li>Configure at <strong>http://192.168.4.1</strong></li>
 </ol>
 </div>
-<div class="fw-info">Requires Chrome/Edge &mdash; <a href="#guide-installation">Manual flashing &rarr;</a></div>
+<div class="fw-info">&#x26a0; Development build &mdash; not yet tested on real hardware &mdash; <a href="#guide-installation">Manual flashing &rarr;</a></div>
 </div>
 </div>
 
@@ -472,13 +419,15 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
-<h4>What is ESP Remote ID?</h4>
-<p>ESP Remote ID is an open-source firmware that transforms any ESP32 microcontroller into a universal Remote ID transmitter compliant with <b>ASTM F3411-22a</b> (USA) and <b>ASD-STAN prEN 4709-002</b> (EU) standards. It reads GPS position data from your existing flight controller via UART and broadcasts ASTM-standard Open Drone ID messages over WiFi Beacon (802.11) and Bluetooth Low Energy (BLE 4.0 and BLE 5.0 Coded PHY).</p>
+<h4>What is ESP DRONE REMOTEID?</h4>
+<p>ESP DRONE REMOTEID is an open-source firmware being developed to transform any ESP32 microcontroller into a universal Remote ID transmitter targeting <b>ASTM F3411-22a</b> (USA) and <b>ASD-STAN prEN 4709-002</b> (EU) standards. It is designed to read GPS position data from a flight controller via UART and broadcast ASTM-standard Open Drone ID messages over WiFi Beacon (802.11) and Bluetooth Low Energy (BLE 4.0 and BLE 5.0 Coded PHY).</p>
 
-<h4>Key Features</h4>
+<div class="callout"><strong>&#x26a0; Development Status:</strong> The firmware code has been written but <b>has not been tested on real hardware yet</b>. All features listed below are implemented in code and should work in theory, but have not been verified with an actual flight controller, GPS module, or Remote ID receiver. The web-based configurator UI is fully functional as a standalone demo.</div>
+
+<h4>Implemented Features (code complete, awaiting hardware testing)</h4>
 <ul>
-<li><b>Triple protocol support:</b> MAVLink (ArduPilot), MSP (Betaflight/INAV), NMEA (any GPS)</li>
-<li><b>Automatic protocol detection</b> on boot &mdash; no manual switching</li>
+<li><b>Triple protocol input:</b> MAVLink, MSP, NMEA parsers implemented</li>
+<li><b>Automatic protocol detection</b> on boot &mdash; no manual switching needed</li>
 <li><b>Dual radio broadcast:</b> WiFi Beacon (802.11) + BLE 4.0 + BLE 5.0 Long Range</li>
 <li><b>No second GPS required</b> &mdash; reuses the drone's existing GPS data</li>
 <li><b>Built-in WiFi Access Point</b> with web configuration at 192.168.4.1</li>
@@ -489,14 +438,14 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 </ul>
 
 <h4>Regulatory Compliance</h4>
-<p>The firmware implements the full ASTM F3411-22a Open Drone ID (ODID) message set:</p>
+<p>The firmware targets the ASTM F3411-22a Open Drone ID (ODID) message set. The following message types are implemented in code:</p>
 <ul>
 <li><b>Basic ID Message</b> &mdash; UAS ID, ID type, UA type</li>
 <li><b>Location/Vector Message</b> &mdash; latitude, longitude, altitude, speed, heading</li>
 <li><b>System Message</b> &mdash; operator ID, timestamps</li>
 <li><b>Self-ID Message</b> &mdash; additional operator information</li>
 </ul>
-<p>These messages satisfy Remote ID requirements mandated by FAA Part 89, EASA Implementing Regulation 2021/664, and similar regulations worldwide.</p>
+<p><b>Note:</b> Compliance with FAA Part 89, EASA 2021/664, or any other regulation has <b>not been verified</b>. Hardware testing and regulatory validation are required before use in actual flight operations.</p>
 
 <h4>Technical Specifications</h4>
 <table>
@@ -540,7 +489,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 
   <!-- ESP32 -->
   <rect x="320" y="15" width="130" height="100" rx="8" fill="#e6f7e6" stroke="#1a7d2e" stroke-width="1.5"/>
-  <text x="385" y="37" text-anchor="middle" font-size="10" fill="#1a7d2e" font-weight="600">ESP Remote ID</text>
+  <text x="385" y="37" text-anchor="middle" font-size="10" fill="#1a7d2e" font-weight="600">ESP DRONE REMOTEID</text>
   <text x="385" y="53" text-anchor="middle" font-size="9" fill="#555">ESP32 / S3 / C3</text>
   <text x="385" y="69" text-anchor="middle" font-size="9" fill="#888">UART2 RX (GPIO16)</text>
   <text x="385" y="83" text-anchor="middle" font-size="9" fill="#888">Packs ODID messages</text>
@@ -561,7 +510,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
   <text x="537" y="92" text-anchor="middle" font-size="10" fill="#c62828" font-weight="600">BLE</text>
   <text x="537" y="107" text-anchor="middle" font-size="8" fill="#888">4.0 / 5.0 LR</text>
 </svg>
-<div class="diag-cap">System architecture: GPS → Flight Controller → ESP Remote ID → WiFi/BLE broadcast</div>
+<div class="diag-cap">System architecture: GPS → Flight Controller → ESP DRONE REMOTEID → WiFi/BLE broadcast</div>
 </div>
 </div>
 </div>
@@ -618,7 +567,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
 
   <!-- ESP32 box -->
   <rect x="240" y="15" width="200" height="170" rx="10" fill="#e6f7e6" stroke="#1a7d2e" stroke-width="1.5"/>
-  <text x="340" y="38" text-anchor="middle" font-size="12" fill="#1a7d2e" font-weight="600">ESP Remote ID</text>
+  <text x="340" y="38" text-anchor="middle" font-size="12" fill="#1a7d2e" font-weight="600">ESP DRONE REMOTEID</text>
   <text x="340" y="54" text-anchor="middle" font-size="9" fill="#666">ESP32 / ESP32-S3 / ESP32-C3</text>
   <text x="340" y="68" text-anchor="middle" font-size="9" fill="#666">UART2 RX (default pin)</text>
 
@@ -640,7 +589,7 @@ footer .fw-copy{font-size:.92em;color:#bbb}
   <text x="502" y="162" text-anchor="middle" font-size="8" fill="#888">Alt RX pins:</text>
   <text x="502" y="176" text-anchor="middle" font-size="7" fill="#aaa">S3:GPIO18 C3:GPIO7</text>
 </svg>
-<div class="diag-cap">Wiring connections between Flight Controller and ESP Remote ID. For NMEA tap method, add a 1k&Omega; series resistor on the TX line.</div>
+<div class="diag-cap">Wiring connections between Flight Controller and ESP DRONE REMOTEID. For NMEA tap method, add a 1k&Omega; series resistor on the TX line.</div>
 </div>
 
 <h4>Wiring by Flight Controller</h4>
@@ -694,7 +643,7 @@ FC TX &rarr; (optional, not used by NMEA mode)</pre>
 </div>
 <div class="gs-body">
 <h4>Protocol Auto-Detection</h4>
-<p>On boot, the ESP Remote ID listens to the UART for 50 ms and identifies the protocol by looking for specific headers. The detection logic runs in this priority order:</p>
+<p>On boot, the ESP DRONE REMOTEID listens to the UART for 50 ms and identifies the protocol by looking for specific headers. The detection logic runs in this priority order:</p>
 
 <div class="guide-diagram">
 <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">
@@ -906,11 +855,11 @@ esptool.py --chip esp32s3 --port COM3 --baud 921200 \
 docker run --rm -v $(pwd):/out -v $(pwd):/project -w /project \
   espressif/idf:v6.0.1 cp build/*.bin /out/</pre>
 
-<h4>First Boot &amp; Verification</h4>
-<p>After flashing successfully, follow these steps to verify the device is working:</p>
+<h4>First Boot &amp; Verification (expected behavior, untested)</h4>
+<p>After flashing successfully, the following behavior is expected once hardware testing confirms the firmware works:</p>
 <ol>
 <li><b>Power the ESP32</b> via USB or connect it to your flight controller's BEC.</li>
-<li><b>Wait 10-15 seconds</b> for the ESP32 to boot. The status LED (if connected to GPIO2) will start blinking once a GPS fix is obtained.</li>
+<li><b>Wait 10-15 seconds</b> for the ESP32 to boot. The status LED (if connected to GPIO2) should start blinking once a GPS fix is obtained.</li>
 <li><b>Scan for WiFi</b> on your phone or laptop. You should see a network named <b>ESP-RID</b> (or your custom SSID).</li>
 <li><b>Connect to ESP-RID</b> (no password by default).</li>
 <li><b>Open a browser</b> and navigate to <code>http://192.168.4.1</code>. The configuration page should load.</li>
@@ -918,9 +867,9 @@ docker run --rm -v $(pwd):/out -v $(pwd):/project -w /project \
 <li><b>Verify Remote ID broadcast</b> — use a smartphone app like <i>Drone Scanner</i> (iOS/Android) or <i>OpenDroneID Viewer</i> (Android) to confirm that Remote ID messages are being received.</li>
 </ol>
 
-<h5>Expected LED Behavior</h5>
+<h5>Expected LED Behavior (as implemented in code)</h5>
 <table>
-<tr><th>LED State</th><th>Meaning</th></tr>
+<tr><th>LED State</th><th>Intended Meaning</th></tr>
 <tr><td>Solid on (briefly at boot)</td><td>ESP32 initializing</td></tr>
 <tr><td>Slow blink (~1 Hz)</td><td>GPS fix acquired, broadcasting Remote ID</td></tr>
 <tr><td>Fast blink (~5 Hz)</td><td>No GPS fix, waiting for data</td></tr>
@@ -1110,9 +1059,11 @@ idf.py -p COM3 monitor</pre>
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
+<div class="callout"><strong>&#x1f4a1; Note:</strong> The web UI is fully functional as a <a href="config(demo).html">standalone demo page</a>. The configurator, dashboard, console, and OTA upload interfaces can be explored without hardware. When running on the actual ESP32, the UI talks to the REST API at <code>192.168.4.1</code>.</div>
+
 <h4>Accessing the Web UI</h4>
 <ol>
-<li>Power the ESP Remote ID (USB or battery).</li>
+<li>Power the ESP DRONE REMOTEID (USB or battery).</li>
 <li>On your phone, tablet, or PC, scan for WiFi networks.</li>
 <li>Connect to <b>ESP-RID</b> (no password by default).</li>
 <li>Open a browser and navigate to <b>http://192.168.4.1</b>.</li>
@@ -1120,7 +1071,7 @@ idf.py -p COM3 monitor</pre>
 <div class="callout"><strong>&#x26a0; Note:</strong> The ESP32 creates its own WiFi network. You will lose internet connectivity while connected to it. This is normal.</div>
 
 <h4>Step-by-Step Setup Walkthrough</h4>
-<p>Follow this sequence to configure your ESP Remote ID for the first time:</p>
+<p>Follow this sequence to configure your ESP DRONE REMOTEID for the first time (note: hardware testing pending):</p>
 <table>
 <tr><th>Step</th><th>Action</th><th>Details</th></tr>
 <tr><td>1</td><td>Set UAS ID</td><td>Navigate to <b>Identity</b> tab. Enter your drone's serial number or CAA registration in the UAS ID field (max 20 characters). Example: <code>RID-A1B2C3D4</code>.</td></tr>
@@ -1200,8 +1151,10 @@ idf.py -p COM3 monitor</pre>
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
+<div class="callout"><strong>&#x26a0; Untested:</strong> The OTA update mechanism is implemented in code (<code>web_config.c</code> handles <code>/ota</code> HTTP POST with ESP-IDF OTA API) but has <b>not been tested on real hardware</b>.</div>
+
 <h4>Over-the-Air Firmware Update</h4>
-<p>The ESP Remote ID supports updating firmware wirelessly through the web interface. No USB cable is needed once the initial firmware is flashed.</p>
+<p>The ESP DRONE REMOTEID aims to support updating firmware wirelessly through the web interface. No USB cable would be needed once the initial firmware is flashed.</p>
 
 <h4>Prerequisites</h4>
 <ul>
@@ -1316,8 +1269,10 @@ idf.py -p COM3 monitor</pre>
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
+<div class="callout"><strong>&#x26a0; Untested:</strong> The security features (lock levels, public key authentication, signed commands) are implemented in code but have <b>not been tested on real hardware</b>. Use with caution.</div>
+
 <h4>Lock Levels</h4>
-<p>The firmware supports three lock levels to prevent unauthorized configuration changes:</p>
+<p>The firmware implements three lock levels to prevent unauthorized configuration changes:</p>
 <table>
 <tr><th>Level</th><th>Name</th><th>Effect</th></tr>
 <tr><td>0</td><td>Normal</td><td>All configuration changes are allowed via web UI and REST API. No authentication required.</td></tr>
@@ -1676,23 +1631,24 @@ cat public.pem</pre>
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
-<h4>Standards Compliance</h4>
-<p>ESP Remote ID implements the following standards:</p>
+<h4>Standards Compliance (targeted)</h4>
+<p>ESP DRONE REMOTEID targets the following standards (implementation complete, compliance testing pending):</p>
 <ul>
 <li><b>ASTM F3411-22a</b> &mdash; Standard Specification for Remote ID and Tracking. This is the US FAA-accepted standard that also forms the basis for many international regulations.</li>
 <li><b>ASD-STAN prEN 4709-002</b> &mdash; European standard for direct Remote ID, adopted by EASA and EU member states.</li>
 </ul>
 
 <h4>FAA (United States)</h4>
-<p>FAA Part 89 requires all drones weighing more than 0.55 lb (250 g) and flown outdoors to broadcast Remote ID. The regulation came into effect on September 16, 2023. ESP Remote ID helps drone operators comply with this requirement by:</p>
+<p>FAA Part 89 requires all drones weighing more than 0.55 lb (250 g) and flown outdoors to broadcast Remote ID. The regulation came into effect on September 16, 2023. Once hardware testing is complete, ESP DRONE REMOTEID aims to help drone operators comply with this requirement by:</p>
 <ul>
 <li>Broadcasting ASTM F3411-22a Standard Remote ID messages via WiFi Beacon and BLE</li>
 <li>Transmitting at 1 Hz (meeting the minimum requirement)</li>
 <li>Including all required data: drone ID, location, altitude, speed, operator ID</li>
 </ul>
+<p><b>Note:</b> Regulatory compliance has <b>not been verified</b>. Do not use in actual flight operations until testing confirms compliance.</p>
 
 <h4>EASA (European Union)</h4>
-<p>EU Implementing Regulation 2021/664 (U-Space) and 2019/947 require Remote ID for most drone operations in the Open and Specific categories. ESP Remote ID supports compliance by broadcasting Direct Remote ID (prEN 4709-002) over WiFi and BLE.</p>
+<p>EU Implementing Regulation 2021/664 (U-Space) and 2019/947 require Remote ID for most drone operations in the Open and Specific categories. ESP DRONE REMOTEID supports compliance by broadcasting Direct Remote ID (prEN 4709-002) over WiFi and BLE.</p>
 
 <h4>Country-by-Country Overview</h4>
 <table>
@@ -1709,10 +1665,10 @@ cat public.pem</pre>
 </table>
 
 <h4>FCC / CE Compliance</h4>
-<p>ESP Remote ID operates in the 2.4 GHz ISM band. The ESP32's WiFi and BLE transmitters are certified under FCC Part 15 and CE RED when used with Espressif's reference modules. Using external antennas may affect compliance. Ensure your antenna setup complies with local radio regulations.</p>
+<p>ESP DRONE REMOTEID operates in the 2.4 GHz ISM band. The ESP32's WiFi and BLE transmitters are certified under FCC Part 15 and CE RED when used with Espressif's reference modules. Using external antennas may affect compliance. Ensure your antenna setup complies with local radio regulations.</p>
 
 <h4>Operator Registration</h4>
-<p>Most countries require drone operators to register with the national aviation authority and display their operator ID on the drone. ESP Remote ID allows you to set your operator ID in the configuration, which is included in the System Message (Type 2) of the ODID transmission. Check your local authority's requirements:</p>
+<p>Most countries require drone operators to register with the national aviation authority and display their operator ID on the drone. ESP DRONE REMOTEID allows you to set your operator ID in the configuration, which is included in the System Message (Type 2) of the ODID transmission. Check your local authority's requirements:</p>
 <ul>
 <li><b>USA:</b> <a href="https://faadronezone.faa.gov">FAA DroneZone</a></li>
 <li><b>EU:</b> Register in your country's UAS system</li>
@@ -1736,33 +1692,19 @@ cat public.pem</pre>
 </ul>
 
 <h4>Tested Configurations</h4>
-<p>The following hardware and protocol combinations have been verified by the community. Results are reported by users and subject to change with firmware updates.</p>
-<table>
-<tr><th>Flight Controller</th><th>Protocol</th><th>ESP32 Board</th><th>Status</th><th>Reported By</th></tr>
-<tr><td>Pixhawk (PX4)</td><td>MAVLink</td><td>ESP32 DevKitC</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>Pixhawk (ArduPilot)</td><td>MAVLink</td><td>ESP32 DevKitC</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>Matek F405-STD</td><td>MSP</td><td>ESP32 DevKitC</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>Matek F765-Wing</td><td>MAVLink</td><td>ESP32-S3</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>BN-880 GPS (direct tap)</td><td>NMEA</td><td>ESP32 DevKitC</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>BN-220 GPS (direct tap)</td><td>NMEA</td><td>ESP32-C3</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-<tr><td>Betaflight F4</td><td>MSP</td><td>ESP32 DevKitC</td><td><span class="tag tag-blue">Reported</span></td><td>Community</td></tr>
-<tr><td>iNav F7</td><td>MSP</td><td>ESP32-S3</td><td><span class="tag tag-blue">Reported</span></td><td>Community</td></tr>
-<tr><td>Holybro Kakute F7</td><td>MAVLink</td><td>ESP32 DevKitC</td><td><span class="tag tag-blue">Reported</span></td><td>Community</td></tr>
-<tr><td>Standard GPS module</td><td>NMEA</td><td>ESP32 DevKitC</td><td><span class="tag tag-green">Verified</span></td><td>Developer</td></tr>
-</table>
-<p><span class="tag tag-green">Verified</span> = tested by the project developer &mdash; <span class="tag tag-blue">Reported</span> = reported working by community users.</p>
-<p>If you have tested a configuration not listed here, please <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/issues">open an issue</a> or submit a PR to add it.</p>
+<p>No hardware testing has been performed yet. The code compiles and the web UI is functional as a standalone demo, but the firmware has not been tested with any flight controller, GPS module, or Remote ID receiver.</p>
+<p>Once testing begins, results will be listed here. If you have tested this firmware, please <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/issues">open an issue</a> or submit a PR to share your results.</p>
 
 <h4>Protocol Maturity</h4>
 <table>
 <tr><th>Protocol</th><th>Status</th><th>Notes</th></tr>
-<tr><td>WiFi Beacon</td><td><span class="tag tag-green">Stable</span></td><td>Fully implemented and tested. The primary broadcast method. Enabled by default.</td></tr>
-<tr><td>BLE 4.0</td><td><span class="tag tag-green">Stable</span></td><td>Legacy BLE advertising. Works on all ESP32 variants. Enabled by default.</td></tr>
-<tr><td>BLE 5.0 LR (Coded PHY)</td><td><span class="tag tag-red">Beta</span></td><td>Requires ESP32-S3 or ESP32-C3. Disabled by default. Longer range, needs real-world validation.</td></tr>
-<tr><td>WiFi NAN</td><td><span class="tag tag-blue">Planned</span></td><td>ASTM F3411-22a mentions NAN as optional. Implementation started but transmission path is incomplete. Not available for use.</td></tr>
-<tr><td>MAVLink (input)</td><td><span class="tag tag-green">Stable</span></td><td>v1 and v2 protocol support. Used with ArduPilot / PX4 flight controllers.</td></tr>
-<tr><td>MSP (input)</td><td><span class="tag tag-green">Stable</span></td><td>MSP v1. Used with Betaflight / iNAV flight controllers.</td></tr>
-<tr><td>NMEA 0183 (input)</td><td><span class="tag tag-green">Stable</span></td><td>Works with any standard GPS module. Requires 1k&Omega; resistor tap.</td></tr>
+<tr><td>WiFi Beacon</td><td><span class="tag tag-blue">Implemented</span></td><td>Code complete. Uses 802.11 beacon frames with OUI-based IE. Enabled by default. Awaiting hardware testing.</td></tr>
+<tr><td>BLE 4.0</td><td><span class="tag tag-blue">Implemented</span></td><td>Legacy BLE advertising implemented for all ESP32 variants. Enabled by default. Awaiting hardware testing.</td></tr>
+<tr><td>BLE 5.0 LR (Coded PHY)</td><td><span class="tag tag-blue">Implemented</span></td><td>Requires ESP32-S3 or ESP32-C3. Disabled by default. Awaiting hardware testing.</td></tr>
+<tr><td>WiFi NAN</td><td><span class="tag" style="background:#f0f0f0;color:#999">Incomplete</span></td><td>ASTM F3411-22a mentions NAN as optional. Implementation started but transmission path is incomplete. Not available for use.</td></tr>
+<tr><td>MAVLink (input)</td><td><span class="tag tag-blue">Implemented</span></td><td>v1 and v2 protocol parsers implemented. Awaiting hardware testing with ArduPilot / PX4.</td></tr>
+<tr><td>MSP (input)</td><td><span class="tag tag-blue">Implemented</span></td><td>MSP v1 parser implemented. Awaiting hardware testing with Betaflight / iNAV.</td></tr>
+<tr><td>NMEA 0183 (input)</td><td><span class="tag tag-blue">Implemented</span></td><td>NMEA sentence parser implemented for standard GPS modules. Awaiting hardware testing.</td></tr>
 </table>
 </div>
 </div>
@@ -1853,7 +1795,7 @@ GitHub
 <span class="sep">|</span>
 <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/issues">Issues</a>
 </div>
-<div class="fw-copy">ESP DRONE REMOTEID v1.0.0 &mdash; ASTM F3411-22a Open DroneID &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/blob/main/LICENSE">GPL-3.0 License</a></div>
+<div class="fw-copy">ESP DRONE REMOTEID v0.0.1-dev &mdash; ASTM F3411-22a Open DroneID (development) &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID/blob/main/LICENSE">GPL-3.0 License</a></div>
 </footer>
 
 <script>

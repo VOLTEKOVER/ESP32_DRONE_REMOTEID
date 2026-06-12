@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ESP Remote ID [BETA] — Config Demo</title>
+<title>ESP DRONE REMOTEID [DEV] — Config Demo</title>
 <style>
 :root{--bg:#f2f2f2;--card-bg:#fff;--card-border:#d4d4d4;--txt:#222;--txt-sec:#666;--txt-muted:#999;--line:#ddd;--hover:#f0f0f0;--input-bg:#fff;--input-border:#d0d0d0;--shadow:rgba(0,0,0,.06);--accent:#222}
 @media(prefers-color-scheme:dark){
@@ -229,7 +229,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 
 <div class="hdr">
 <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" target="_blank" class="brand">
-<img class="logo-img" src="images/logo%20con%20scritta.svg" alt="ESP Remote ID">
+<img class="logo-img" src="images/logo%20con%20scritta.svg" alt="ESP DRONE REMOTEID">
 </a>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <div class="badge" id="status-badge"><span class="health-dot" id="health-dot"></span> Connecting...</div>
@@ -256,7 +256,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div id="view-dashboard" class="view">
 <div class="dash">
 <div class="dash-hdr">
-<h2>&#x1f4ca; ESP Remote ID Dashboard</h2>
+<h2>&#x1f4ca; ESP DRONE REMOTEID Dashboard</h2>
 <div>
 <span class="dash-badge live" id="dash-status-badge">&#x25cf; LIVE</span>
 <button class="dash-btn-config" onclick="setView('advanced')" style="margin-left:8px">&#x2699; Configure</button>
@@ -315,6 +315,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="term-header">
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
+<button class="btn-sm" onclick="copyAllLogs()" title="Copy all logs from device">&#x1f4cb; All</button>
 <button class="btn-sm" onclick="clearTerm2()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn2" onclick="toggleTermScroll2()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -537,7 +538,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="card">
 <h2><span class="ico">&#x1f4ca;</span> Status &amp; Console <span class="tag tag-stable">Stable</span></h2>
 <div class="guide">
-Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seconds. Status shows GPS data and transmission counters. Console captures real-time log output from the device.
+Live telemetry and serial console from the ESP DRONE REMOTEID. Refreshes every 2 seconds. Status shows GPS data and transmission counters. Console captures real-time log output from the device.
 <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/#guide-webui" target="_blank">Wiki &rarr;</a>
 </div>
 
@@ -545,6 +546,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 <div class="term-header">
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
+<button class="btn-sm" onclick="copyAllLogs()" title="Copy all logs from device">&#x1f4cb; All</button>
 <button class="btn-sm" onclick="clearTerm()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn" onclick="toggleTermScroll()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -595,7 +597,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 </div>
 </div>
 
-<div class="footer">&mdash; ESP DRONE REMOTEID v1.0.0 &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">GitHub</a> &mdash; <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">Wiki</a></div>
+<div class="footer">&mdash; ESP DRONE REMOTEID v0.0.1-dev &mdash; <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">GitHub</a> &mdash; <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">Wiki</a></div>
 
 </div>
 
@@ -1024,6 +1026,14 @@ function toggleTermScrollTo(btnId){
 function toggleTermScroll(){toggleTermScrollTo('term-scroll-btn')}
 function toggleTermScroll2(){toggleTermScrollTo('term-scroll-btn2')}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function copyAllLogs(){
+  var out=document.getElementById('term-output')
+  if(!out)return
+  var txt=''
+  out.querySelectorAll('.line').forEach(function(l){txt+=l.textContent+'\n'})
+  if(!txt){showMsg('Nothing to copy',1);return}
+  navigator.clipboard.writeText(txt).then(function(){showMsg('All logs copied ('+txt.split('\n').length+' lines)')}).catch(function(){showMsg('Failed to copy',1)})
+}
 
 /* ---------- Dashboard (simulated) ---------- */
 var demoLat=45.123456,demoLon=9.654321,demoAlt=82.3,demoSpeed=5.2,demoHeading=180,demoSat=12,demoTx=0;
