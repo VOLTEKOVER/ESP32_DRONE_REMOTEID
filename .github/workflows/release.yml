@@ -73,6 +73,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
@@ -91,37 +97,51 @@ jobs:
 
       - name: Prepare release assets
         run: |
+          mkdir -p release
+          for dir in artifacts/firmware-*/; do
+            target=$(basename "$dir" | sed 's/firmware-//')
+            cp -r "$dir/$target" "release/$target"
+            cd release && zip -r "firmware-$target-${{ env.VERSION }}.zip" "$target/" && cd ..
+          done
+          # Build full firmware tree for Pages deployment
           mkdir -p release/firmware
           for dir in artifacts/firmware-*/; do
             target=$(basename "$dir" | sed 's/firmware-//')
             cp -r "$dir/$target" "release/firmware/$target"
           done
-          cat > release/firmware/manifest.json << EOF
-          {
-            "name": "ESP Remote ID",
-            "version": "${{ env.VERSION }}",
-            "home_url": "https://valeriocomo.github.io/ESP32_DRONE_ID",
-            "config_url": "http://192.168.4.1",
-            "builds": [
-              { "chipFamily": "ESP32", "parts": [
-                { "path": "firmware/esp32/bootloader.bin", "offset": 0x1000 },
-                { "path": "firmware/esp32/partition-table.bin", "offset": 0x8000 },
-                { "path": "firmware/esp32/esp32-remote-id-scanner.bin", "offset": 0x20000 }
-              ]},
-              { "chipFamily": "ESP32-S3", "parts": [
-                { "path": "firmware/esp32s3/bootloader.bin", "offset": 0x0 },
-                { "path": "firmware/esp32s3/partition-table.bin", "offset": 0x8000 },
-                { "path": "firmware/esp32s3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
-              ]},
-              { "chipFamily": "ESP32-C3", "parts": [
-                { "path": "firmware/esp32c3/bootloader.bin", "offset": 0x0 },
-                { "path": "firmware/esp32c3/partition-table.bin", "offset": 0x8000 },
-                { "path": "firmware/esp32c3/esp32-remote-id-scanner.bin", "offset": 0x20000 }
-              ]}
-            ]
-          }
-          EOF
-          cd release && zip -r firmware-${{ env.VERSION }}.zip firmware/
+        shell: bash
+
+      - name: Generate manifest.json (release)
+        run: |
+          python3 -c "
+import json, os
+manifest = {
+  'name': 'ESP Remote ID',
+  'version': os.environ['VERSION'],
+  'home_url': 'https://voltekover.github.io/ESP32_DRONE_ID',
+  'config_url': 'http://192.168.4.1',
+  'new_install_improv_wait_time': 0,
+  'builds': [
+    { 'chipFamily': 'ESP32', 'parts': [
+      { 'path': 'firmware/esp32/bootloader.bin', 'offset': 0x1000 },
+      { 'path': 'firmware/esp32/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]},
+    { 'chipFamily': 'ESP32-S3', 'parts': [
+      { 'path': 'firmware/esp32s3/bootloader.bin', 'offset': 0x0 },
+      { 'path': 'firmware/esp32s3/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32s3/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]},
+    { 'chipFamily': 'ESP32-C3', 'parts': [
+      { 'path': 'firmware/esp32c3/bootloader.bin', 'offset': 0x0 },
+      { 'path': 'firmware/esp32c3/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32c3/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]}
+  ]
+}
+with open('release/firmware/manifest.json', 'w') as f:
+  json.dump(manifest, f, indent=2)
+"
         shell: bash
 
       - name: Generate release notes
@@ -140,10 +160,12 @@ jobs:
 
           | File | Description |
           |------|-------------|
-          | \`firmware-${VERSION}.zip\` | All targets (bootloader + partition + firmware) |
+          | \`firmware-esp32-${VERSION}.zip\` | ESP32 target (bootloader + partition + firmware) |
+          | \`firmware-esp32s3-${VERSION}.zip\` | ESP32-S3 target (bootloader + partition + firmware) |
+          | \`firmware-esp32c3-${VERSION}.zip\` | ESP32-C3 target (bootloader + partition + firmware) |
           | \`manifest.json\` | WebSerial installer manifest |
 
-          > 💡 Flash via browser at https://valeriocomo.github.io/ESP32_DRONE_ID/
+          > 💡 Flash via browser at https://voltekover.github.io/ESP32_DRONE_ID/
 
           ## ✨ What's Changed
           EOF
@@ -154,30 +176,12 @@ jobs:
             echo "*(initial release)*" >> release-notes.md
           else
             echo "" >> release-notes.md
-            echo "### 🚀 Features" >> release-notes.md
-            git log "$PREV.." --grep="^feat" --format="  - %s" >> release-notes.md || true
-            echo "" >> release-notes.md
-            echo "### 🐛 Fixes" >> release-notes.md
-            git log "$PREV.." --grep="^fix" --format="  - %s" >> release-notes.md || true
-            echo "" >> release-notes.md
-            echo "### 🛠 Improvements" >> release-notes.md
-            git log "$PREV.." --grep="^improve\|^perf\|^refactor\|^optimize" -i --format="  - %s" >> release-notes.md || true
-            echo "" >> release-notes.md
-            echo "### 📚 Documentation" >> release-notes.md
-            git log "$PREV.." --grep="^docs\|^readme\|^convert" -i --format="  - %s" >> release-notes.md || true
-            echo "" >> release-notes.md
-            echo "### 🧹 Chores" >> release-notes.md
-            git log "$PREV.." --grep="^chore\|^cleanup\|^remove\|^rm\b" -i --format="  - %s" >> release-notes.md || true
-            echo "" >> release-notes.md
-            echo "### 🔄 Full Commit Log" >> release-notes.md
-            echo '```' >> release-notes.md
-            git log --oneline "$PREV.." >> release-notes.md
-            echo '```' >> release-notes.md
+            git log "$PREV.." --format="  - %s" >> release-notes.md || true
           fi
 
           echo "" >> release-notes.md
           echo "---" >> release-notes.md
-          echo "_Full documentation at https://valeriocomo.github.io/ESP32_DRONE_ID/_" >> release-notes.md
+          echo "_Full documentation at https://voltekover.github.io/ESP32_DRONE_ID/_" >> release-notes.md
         shell: bash
 
       - name: Create Release
@@ -186,5 +190,53 @@ jobs:
           name: ESP Remote ID v${{ env.VERSION }}
           body_path: release-notes.md
           files: |
-            release/firmware-${{ env.VERSION }}.zip
+            release/firmware-esp32-${{ env.VERSION }}.zip
+            release/firmware-esp32s3-${{ env.VERSION }}.zip
+            release/firmware-esp32c3-${{ env.VERSION }}.zip
             release/firmware/manifest.json
+
+      - name: Prepare Pages deploy
+        run: |
+          mkdir -p docs/firmware
+          cp -r release/firmware/* docs/firmware/
+          cp -r images docs/
+          # Generate manifest.json in docs/ for Pages
+          python3 -c "
+import json, os
+manifest = {
+  'name': 'ESP Remote ID',
+  'version': os.environ['VERSION'],
+  'home_url': 'https://voltekover.github.io/ESP32_DRONE_ID',
+  'config_url': 'http://192.168.4.1',
+  'new_install_improv_wait_time': 0,
+  'builds': [
+    { 'chipFamily': 'ESP32', 'parts': [
+      { 'path': 'firmware/esp32/bootloader.bin', 'offset': 0x1000 },
+      { 'path': 'firmware/esp32/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]},
+    { 'chipFamily': 'ESP32-S3', 'parts': [
+      { 'path': 'firmware/esp32s3/bootloader.bin', 'offset': 0x0 },
+      { 'path': 'firmware/esp32s3/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32s3/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]},
+    { 'chipFamily': 'ESP32-C3', 'parts': [
+      { 'path': 'firmware/esp32c3/bootloader.bin', 'offset': 0x0 },
+      { 'path': 'firmware/esp32c3/partition-table.bin', 'offset': 0x8000 },
+      { 'path': 'firmware/esp32c3/esp32-remote-id-scanner.bin', 'offset': 0x20000 }
+    ]}
+  ]
+}
+with open('docs/manifest.json', 'w') as f:
+  json.dump(manifest, f, indent=2)
+"
+        shell: bash
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: 'docs'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

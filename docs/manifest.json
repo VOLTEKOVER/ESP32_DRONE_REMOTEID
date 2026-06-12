@@ -1,7 +1,7 @@
 {
   "name": "ESP Remote ID",
   "version": "0.1.0-dev",
-  "home_url": "https://valeriocomo.github.io/ESP32_DRONE_ID",
+  "home_url": "https://voltekover.github.io/ESP32_DRONE_ID",
   "config_url": "http://192.168.4.1",
   "new_install_improv_wait_time": 0,
   "builds": [

@@ -228,7 +228,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="toast-center" id="toast-center"></div>
 
 <div class="hdr">
-<a href="https://github.com/valeriocomo/ESP32_DRONE_ID" target="_blank" class="brand">
+<a href="https://github.com/voltekover/ESP32_DRONE_ID" target="_blank" class="brand">
 <img class="logo-img" src="images/logo%20con%20scritta.svg" alt="ESP Remote ID">
 </a>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -243,7 +243,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <button class="hdr-btn" onclick="exportCfg()">&#x1f4e5; Export</button>
 <button class="hdr-btn" onclick="document.getElementById('import-file').click()">&#x1f4e4; Import</button>
 <input type="file" id="import-file" accept=".json" style="display:none" onchange="importCfg(this)">
-<a href="https://github.com/valeriocomo/ESP32_DRONE_ID" target="_blank" class="hdr-btn github">GitHub</a>
+<a href="https://github.com/voltekover/ESP32_DRONE_ID" target="_blank" class="hdr-btn github">GitHub</a>
 <button id="dark-toggle" onclick="toggleDark()" class="hdr-btn" style="font-size:.9em;padding:4px 8px" title="Toggle dark mode">&#x263e;</button>
 </div>
 </div>
@@ -341,7 +341,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f1">
 <div class="guide">
 <b>Basic ID</b> &mdash; The UAS ID identifies your drone to receivers. Use a serial number (ANSI/CTA-2063) or your CAA registration number, max 20 characters. The UA Type must match your aircraft.
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>UAS ID</label>
@@ -397,7 +397,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f2">
 <div class="guide">
 <b>Tx Modes</b> &mdash; Select which radio technologies to broadcast on. WiFi Beacon is the most compatible. BLE 5.0 Coded PHY offers longer range. Rates are in Hz (packets per second).
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>Enabled Channels</label>
@@ -449,7 +449,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f3">
 <div class="guide">
 <b>Access Point</b> &mdash; Configure the ESP32's management WiFi network. After connecting to <code>ESP-RID</code>, open <code>http://192.168.4.1</code> in your browser. Set the UART baud rate to match your flight controller.
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-config" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>WiFi SSID</label>
@@ -503,7 +503,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <form id="f4">
 <div class="guide">
 <b>Security &amp; Options</b> &mdash; Lock level 0 is normal. Level 1 restricts to signed commands. Level 2 burns efuses permanently. Public keys enable signed command authentication.
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-security" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-security" target="_blank">Wiki &rarr;</a>
 </div>
 
 <label>Lock Level <span class="tag tag-warning">Dangerous</span></label>
@@ -538,7 +538,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <h2><span class="ico">&#x1f4ca;</span> Status &amp; Console <span class="tag tag-stable">Stable</span></h2>
 <div class="guide">
 Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seconds. Status shows GPS data and transmission counters. Console captures real-time log output from the device.
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-webui" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-webui" target="_blank">Wiki &rarr;</a>
 </div>
 
 <div class="term-container">
@@ -569,7 +569,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 <h2><span class="ico">&#x1f4e4;</span> Firmware Update <span class="tag tag-warning">Warning</span></h2>
 <div class="guide" style="border-left-color:#c62828">
 &#x26a0; Upload a firmware <code>.bin</code> file to update over-the-air. <strong>Do NOT disconnect power during the update.</strong> The device reboots automatically. Use the correct .bin for your ESP32 model.
-<a href="https://valeriocomo.github.io/ESP32_DRONE_ID/#guide-ota" target="_blank">Wiki &rarr;</a>
+<a href="https://voltekover.github.io/ESP32_DRONE_ID/#guide-ota" target="_blank">Wiki &rarr;</a>
 </div>
 <div class="ota-zone" id="ota-zone">
 <div class="ico-big">&#x1f4c1;</div>
@@ -595,7 +595,7 @@ Live telemetry and serial console from the ESP Remote ID. Refreshes every 2 seco
 </div>
 </div>
 
-<div class="footer">&mdash; ESP Remote ID [BETA] v1.0.0 &mdash; <a href="https://github.com/valeriocomo/ESP32_DRONE_ID">GitHub</a> &mdash; <a href="https://valeriocomo.github.io/ESP32_DRONE_ID/">Wiki</a></div>
+<div class="footer">&mdash; ESP Remote ID [BETA] v1.0.0 &mdash; <a href="https://github.com/voltekover/ESP32_DRONE_ID">GitHub</a> &mdash; <a href="https://voltekover.github.io/ESP32_DRONE_ID/">Wiki</a></div>
 
 </div>
 
