@@ -315,6 +315,7 @@ fieldset.disabled{opacity:.4;pointer-events:none}
 <div class="term-header">
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
+<button class="btn-sm" onclick="copyTerm('term-output2')" title="Copy console">&#x1f4cb; Copy</button>
 <button class="btn-sm" onclick="clearTerm2()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn2" onclick="toggleTermScroll2()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -545,6 +546,7 @@ Live telemetry and serial console from the ESP DRONE REMOTEID. Refreshes every 2
 <div class="term-header">
 <span class="term-title">&#x1f4bb; Console Output</span>
 <div class="term-toolbar">
+<button class="btn-sm" onclick="copyTerm('term-output')" title="Copy console">&#x1f4cb; Copy</button>
 <button class="btn-sm" onclick="clearTerm()" title="Clear console">&#x1f5d1; Clear</button>
 <button class="btn-sm" id="term-scroll-btn" onclick="toggleTermScroll()" title="Toggle auto-scroll">&#x1f53d; Auto</button>
 </div>
@@ -1044,6 +1046,14 @@ function toggleTermScrollTo(btnId){
 }
 function toggleTermScroll(){toggleTermScrollTo('term-scroll-btn')}
 function toggleTermScroll2(){toggleTermScrollTo('term-scroll-btn2')}
+function copyTerm(outId){
+  var out=document.getElementById(outId)
+  if(!out)return
+  var txt=''
+  out.querySelectorAll('.line').forEach(function(l){txt+=l.textContent+'\n'})
+  if(!txt){showMsg('Nothing to copy',1);return}
+  navigator.clipboard.writeText(txt).then(function(){showMsg('Console copied ('+txt.split('\n').length+' lines)')}).catch(function(){showMsg('Failed to copy',1)})
+}
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 /* ---------- Dashboard ---------- */
