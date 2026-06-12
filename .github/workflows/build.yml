@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
     paths-ignore:
       - '**.md'
-      - 'images/**'
+      - 'docs/images/**'
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -145,8 +145,6 @@ jobs:
           "
         shell: bash
 
-      - name: Copy images into docs
-        run: cp -r images/. docs/images/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5

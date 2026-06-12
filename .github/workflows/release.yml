@@ -199,7 +199,7 @@ jobs:
         run: |
           mkdir -p docs/firmware
           cp -r release/firmware/* docs/firmware/
-          mkdir -p docs/images && cp -r images/. docs/images/
+          mkdir -p docs/images
           # Generate manifest.json in docs/ for Pages
           python3 -c "
           import json, os
