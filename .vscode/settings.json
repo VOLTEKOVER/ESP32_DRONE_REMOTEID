@@ -12,6 +12,6 @@
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=c:\\Users\\valer\\Documents\\GitHub\\ESP_DRONE_REMOTEID\\firmware\\ESP_DRONE_REMOTEID\\build"
+    "--compile-commands-dir=${workspaceFolder}/ESP32_DRONE_REMOTE_ID_Firmware/build"
   ]
 }

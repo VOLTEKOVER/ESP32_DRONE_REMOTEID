@@ -41,7 +41,7 @@ def run_backend(ws_port: int, capture_iface: str, capture_channel: int):
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="ESP DRONE REMOTEID — WiFi RID Analyzer")
+    parser = argparse.ArgumentParser(description="ESP DRONE REMOTEID ANALIZER")
     parser.add_argument("--port", type=int, default=8765, help="WebSocket port (default: 8765)")
     parser.add_argument("--http-port", type=int, default=8080, help="HTTP server port (default: 8080)")
     parser.add_argument("--iface", default=None, help="WiFi interface for capture")
@@ -88,11 +88,11 @@ def main():
         html_content = html_content.replace("__WS_URL__", ws_url)
 
         import tempfile
-        tmp_html = Path(tempfile.gettempdir()) / "rid_analyzer.html"
+        tmp_html = Path(tempfile.gettempdir()) / "ESP_DRONE_REMOTEID_ANALIZER.html"
         tmp_html.write_text(html_content, encoding="utf-8")
 
         window = webview.create_window(
-            title="ESP DRONE REMOTEID — RID Analyzer",
+            title="ESP DRONE REMOTEID ANALIZER",
             url=str(tmp_html),
             width=1280,
             height=860,

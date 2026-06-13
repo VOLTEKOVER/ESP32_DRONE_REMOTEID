@@ -82,7 +82,7 @@ def cmd_serve(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="ESP DRONE REMOTEID — RID CLI Tools")
+    parser = argparse.ArgumentParser(description="ESP DRONE REMOTEID ANALIZER — CLI Tools")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     sub = parser.add_subparsers(dest="command", required=True)

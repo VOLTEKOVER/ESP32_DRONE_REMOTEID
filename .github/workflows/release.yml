@@ -41,6 +41,7 @@ jobs:
         run: |
           . /opt/esp/idf/export.sh > /dev/null 2>&1
           git config --global --add safe.directory "$(pwd)" > /dev/null 2>&1
+          cd ESP32_DRONE_REMOTE_ID_Firmware
           idf.py set-target ${{ matrix.target }}
           echo "CONFIG_PARTITION_TABLE_CUSTOM=y" >> sdkconfig
           echo "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"partitions.csv\"" >> sdkconfig
@@ -56,9 +57,9 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p release/${{ matrix.target }}
-          cp build/bootloader/bootloader.bin release/${{ matrix.target }}/
-          cp build/partition_table/partition-table.bin release/${{ matrix.target }}/
-          cp build/esp-drone-remoteid.bin release/${{ matrix.target }}/
+          cp ESP32_DRONE_REMOTE_ID_Firmware/build/bootloader/bootloader.bin release/${{ matrix.target }}/
+          cp ESP32_DRONE_REMOTE_ID_Firmware/build/partition_table/partition-table.bin release/${{ matrix.target }}/
+          cp ESP32_DRONE_REMOTE_ID_Firmware/build/esp-drone-remoteid.bin release/${{ matrix.target }}/
         shell: bash
 
       - name: Upload
