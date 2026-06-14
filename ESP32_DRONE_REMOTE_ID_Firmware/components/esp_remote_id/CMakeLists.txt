@@ -11,6 +11,7 @@ idf_component_register(
         "src/ble_tx.c"
         "src/web_config.c"
         "src/nvs_storage.c"
+        "src/led_status.c"
         "src/esp_remote_id.c"
     INCLUDE_DIRS
         "include"

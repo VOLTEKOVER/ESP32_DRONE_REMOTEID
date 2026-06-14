@@ -15,6 +15,7 @@
 #include "esp_netif.h"
 #include "web_config.h"
 #include "nvs_storage.h"
+#include "led_status.h"
 
 #define TAG "ESP_RID"
 
@@ -93,6 +94,7 @@ void esp_rid_init(void)
     wifi_tx_init();
     ble_tx_init();
 
+    led_status_init();
     web_config_init();
 
     ESP_LOGI(TAG, "\xE2\x9C\x93 Remote ID initialized");
@@ -126,29 +128,54 @@ void esp_rid_factory_reset(void)
     nvs_storage_save(&g_config);
 }
 
-static void update_transmissions(void)
+static int64_t last_tx_wifi_bcn = 0;
+static int64_t last_tx_ble4 = 0;
+static int64_t last_tx_ble5 = 0;
+
+static bool rate_allowed(int64_t *last_us, float rate_hz)
 {
-    if (!g_state.gps_valid && !g_config.bcast_powerup) return;
+    if (rate_hz <= 0.0f) return false;
+    int64_t now = esp_timer_get_time();
+    int64_t interval = (int64_t)(1000000.0f / rate_hz);
+    if (now - *last_us >= interval) {
+        *last_us = now;
+        return true;
+    }
+    return false;
+}
 
-    if (g_state.active_protocol == RID_PROTOCOL_UNKNOWN) return;
+static bool update_transmissions(void)
+{
+    if (!g_state.gps_valid && !g_config.bcast_powerup) return false;
+    if (g_state.active_protocol == RID_PROTOCOL_UNKNOWN) return false;
 
-    if (g_config.tx_modes & RID_TRANSMIT_WIFI_BCN) {
+    bool tx = false;
+
+    if ((g_config.tx_modes & RID_TRANSMIT_WIFI_BCN) &&
+        rate_allowed(&last_tx_wifi_bcn, g_config.wifi_bcn_rate_hz)) {
         wifi_tx_transmit(&g_state.gps, &g_state.identity);
         g_state.wifi_bcn_count++;
         g_state.transmissions_count++;
+        tx = true;
     }
 
-    if (g_config.tx_modes & RID_TRANSMIT_BLE4) {
+    if ((g_config.tx_modes & RID_TRANSMIT_BLE4) &&
+        rate_allowed(&last_tx_ble4, g_config.ble4_rate_hz)) {
         ble_tx_transmit_legacy(&g_state.gps, &g_state.identity);
         g_state.ble4_count++;
         g_state.transmissions_count++;
+        tx = true;
     }
 
-    if (g_config.tx_modes & RID_TRANSMIT_BLE5) {
+    if ((g_config.tx_modes & RID_TRANSMIT_BLE5) &&
+        rate_allowed(&last_tx_ble5, g_config.ble5_rate_hz)) {
         ble_tx_transmit_lr(&g_state.gps, &g_state.identity);
         g_state.ble5_count++;
         g_state.transmissions_count++;
+        tx = true;
     }
+
+    return tx;
 }
 
 static const char *proto_name(rid_protocol_t p)
@@ -263,10 +290,13 @@ static void rid_task(void *arg)
                     g_state.identity.uas_id_2[0] = '\0';
                 }
 
-                update_transmissions();
+                bool tx = update_transmissions();
+                led_status_update(g_state.gps_valid, tx);
             }
+        } else {
+            led_status_update(false, false);
         }
-
+    
         if (g_config.options & RID_OPT_PRINT_RID_MAVLINK) {
             ESP_LOGI(TAG, "RID uas=%s lat=%.6f lon=%.6f alt=%.1f speed=%.1f hdg=%d fix=%d sat=%u",
                 g_state.identity.uas_id,
