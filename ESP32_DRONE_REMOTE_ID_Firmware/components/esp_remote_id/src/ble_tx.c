@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include "esp_log.h"
-#ifdef CONFIG_BT_BLUEDROID_ENABLED
+#include "soc/soc_caps.h"
+#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(SOC_BT_SUPPORTED)
 #include "esp_bt.h"
 #include "esp_bt_main.h"
 #include "esp_gap_ble_api.h"
@@ -14,7 +15,7 @@
 #define RID_SERVICE_UUID 0xFFFA
 
 static bool g_initialized = false;
-#ifdef CONFIG_BT_BLUEDROID_ENABLED
+#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(SOC_BT_SUPPORTED)
 static ODID_UAS_Data g_uas_data;
 static uint8_t g_adv_data[64];
 
@@ -108,7 +109,7 @@ static void build_legacy_adv(rid_gps_data_t *gps, rid_identity_t *identity, uint
 void ble_tx_init(void)
 {
     if (g_initialized) return;
-#ifdef CONFIG_BT_BLUEDROID_ENABLED
+#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(SOC_BT_SUPPORTED)
     esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
@@ -128,7 +129,7 @@ bool ble_tx_transmit_legacy(rid_gps_data_t *gps, rid_identity_t *identity)
 {
     if (!g_initialized || !gps || !identity) return false;
 
-#ifdef CONFIG_BT_BLUEDROID_ENABLED
+#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(SOC_BT_SUPPORTED)
     uint16_t len;
     build_legacy_adv(gps, identity, g_adv_data, &len);
 
@@ -156,7 +157,7 @@ bool ble_tx_transmit_lr(rid_gps_data_t *gps, rid_identity_t *identity)
 {
     if (!g_initialized || !gps || !identity) return false;
 
-#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(CONFIG_BT_BLE_50_EXTEND_ADV_EN)
+#if defined(CONFIG_BT_BLUEDROID_ENABLED) && defined(SOC_BT_SUPPORTED) && defined(CONFIG_BT_BLE_50_EXTEND_ADV_EN)
     uint16_t len;
     build_legacy_adv(gps, identity, g_adv_data, &len);
 
