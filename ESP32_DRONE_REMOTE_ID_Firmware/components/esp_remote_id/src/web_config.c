@@ -444,7 +444,7 @@ static esp_err_t handle_ota(httpd_req_t *req)
             char got_hex[65];
             bytes_to_hex(hash, 32, got_hex);
             esp_ota_abort(ota_handle);
-            char err_msg[128];
+            char err_msg[192];
             snprintf(err_msg, sizeof(err_msg),
                 "SHA-256 mismatch\nexpected: %s\nreceived: %s",
                 expected_hex, got_hex);
