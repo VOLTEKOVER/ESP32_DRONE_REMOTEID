@@ -807,11 +807,11 @@ fieldset{padding:6px 8px}
 
 <fieldset style="margin-top:16px">
 <legend>Public Keys &#x1f511;</legend>
-<label>Key 1</label><input id="pubkey1" maxlength="64" placeholder="PUBLIC_KEYV1:...">
-<label>Key 2</label><input id="pubkey2" maxlength="64" placeholder="PUBLIC_KEYV1:...">
-<label>Key 3</label><input id="pubkey3" maxlength="64" placeholder="PUBLIC_KEYV1:...">
-<label>Key 4</label><input id="pubkey4" maxlength="64" placeholder="PUBLIC_KEYV1:...">
-<label>Key 5</label><input id="pubkey5" maxlength="64" placeholder="PUBLIC_KEYV1:...">
+<label>Key 1</label><input id="pubkey1" maxlength="512" placeholder="PEM public key or raw base64">
+<label>Key 2</label><input id="pubkey2" maxlength="512" placeholder="PEM public key or raw base64">
+<label>Key 3</label><input id="pubkey3" maxlength="512" placeholder="PEM public key or raw base64">
+<label>Key 4</label><input id="pubkey4" maxlength="512" placeholder="PEM public key or raw base64">
+<label>Key 5</label><input id="pubkey5" maxlength="512" placeholder="PEM public key or raw base64">
 </fieldset>
 
 <button class="btn" type="submit">Save System</button>
@@ -1555,7 +1555,8 @@ function validateUasId(s){
 function validatePublicKey(s){
   if(!s||s.trim()==='')return{ok:true};
   var v=s.trim();
-  if(!/^PUBLIC_KEYV1:/i.test(v))return{ok:false,msg:'Must start with PUBLIC_KEYV1:'};
+  if(/^-----BEGIN/i.test(v))return{ok:true};
+  if(!/^PUBLIC_KEYV1:/i.test(v))return{ok:false,msg:'Must start with PUBLIC_KEYV1: or -----BEGIN'};
   return{ok:true}}
 function updateFieldStatus(el,state,msg){
   el.classList.remove('ok','err','warn');

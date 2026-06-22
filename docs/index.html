@@ -1295,7 +1295,7 @@ idf.py -p COM3 monitor</pre>
 <span class="arrow">&#x25bc;</span>
 </div>
 <div class="gs-body">
-<div class="callout"><strong>&#x1f4a1; Status:</strong> Lock level 0 (open) and level 2 (eFuse permanent) are implemented. Level 2 burns "RID!" magic to EFUSE_BLK3 and is one-time irreversible. Level 1 (signed commands) has the UI infrastructure but signature verification backend is pending. Use with caution.</div>
+<div class="callout"><strong>&#x1f4a1; Status:</strong> All three lock levels are implemented. Level 2 burns "RID!" magic to EFUSE_BLK3 and is one-time irreversible. Level 1 enforces ECDSA P-256 signature verification via the <code>X-Signature</code> header. Use with caution.</div>
 
 <h4>Lock Levels</h4>
 <p>The firmware implements three lock levels to prevent unauthorized configuration changes:</p>

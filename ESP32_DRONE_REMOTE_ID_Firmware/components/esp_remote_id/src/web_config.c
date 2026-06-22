@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include "esp_log.h"
@@ -7,6 +8,7 @@
 #include "esp_wifi.h"
 #include "esp_ota_ops.h"
 #include "psa/crypto.h"
+#include "mbedtls/pk.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
@@ -267,6 +269,110 @@ static void state_to_json(const rid_state_t *s, char *buf, size_t sz)
         (unsigned long)s->last_update_ms);
 }
 
+static const char b64_tab[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static int b64_decode(const char *in, size_t in_len, uint8_t *out, size_t out_size)
+{
+    int len = 0;
+    uint8_t buf[4];
+    int buf_i = 0;
+    for (size_t i = 0; i < in_len && in[i] != '='; i++) {
+        char c = in[i];
+        const char *p = strchr(b64_tab, c);
+        if (!p) continue;
+        buf[buf_i++] = (uint8_t)(p - b64_tab);
+        if (buf_i == 4) {
+            if (len >= (int)out_size) return -1;
+            out[len++] = (buf[0] << 2) | (buf[1] >> 4);
+            if (len >= (int)out_size) return -1;
+            out[len++] = (buf[1] << 4) | (buf[2] >> 2);
+            if (len >= (int)out_size) return -1;
+            out[len++] = (buf[2] << 6) | buf[3];
+            buf_i = 0;
+        }
+    }
+    if (buf_i >= 2) {
+        if (len >= (int)out_size) return -1;
+        out[len++] = (buf[0] << 2) | (buf[1] >> 4);
+    }
+    if (buf_i >= 3) {
+        if (len >= (int)out_size) return -1;
+        out[len++] = (buf[1] << 4) | (buf[2] >> 2);
+    }
+    return len;
+}
+
+static bool verify_signed_body(const char *body, const char *sig_b64, const rid_config_t *cfg)
+{
+    if (!body || !sig_b64 || !*sig_b64 || !cfg) return false;
+
+    size_t b64_len = strlen(sig_b64);
+    size_t sig_max = (b64_len * 3) / 4 + 4;
+    uint8_t *sig = (uint8_t *)malloc(sig_max);
+    if (!sig) return false;
+
+    int sig_len = b64_decode(sig_b64, b64_len, sig, sig_max);
+    if (sig_len <= 0) { free(sig); return false; }
+
+    uint8_t hash[32];
+    size_t hash_len;
+    if (psa_hash_compute(PSA_ALG_SHA_256, (const uint8_t *)body, strlen(body),
+                         hash, sizeof(hash), &hash_len) != PSA_SUCCESS) {
+        free(sig);
+        return false;
+    }
+
+    bool verified = false;
+    for (int i = 0; i < ESP_RID_NUM_KEYS; i++) {
+        const char *key_str = cfg->public_keys[i];
+        if (!key_str || !*key_str) continue;
+
+        mbedtls_pk_context pk;
+        mbedtls_pk_init(&pk);
+
+        int ret;
+        size_t key_len = strlen(key_str);
+
+        /* Try as PEM or DER first */
+        ret = mbedtls_pk_parse_public_key(&pk, (const uint8_t *)key_str, key_len);
+        if (ret != 0) {
+            /* Try after stripping PUBLIC_KEYV1: prefix */
+            const char *prefix = "PUBLIC_KEYV1:";
+            size_t plen = strlen(prefix);
+            if (key_len > plen && strncasecmp(key_str, prefix, plen) == 0) {
+                const char *payload = key_str + plen;
+                size_t payload_len = key_len - plen;
+                uint8_t *key_bin = (uint8_t *)malloc(payload_len);
+                if (key_bin) {
+                    int key_bin_len = b64_decode(payload, payload_len, key_bin, payload_len);
+                    if (key_bin_len > 0) {
+                        mbedtls_pk_free(&pk);
+                        mbedtls_pk_init(&pk);
+                        ret = mbedtls_pk_parse_public_key(&pk, key_bin, key_bin_len);
+                    }
+                    free(key_bin);
+                }
+            }
+        }
+
+        if (ret != 0) {
+            mbedtls_pk_free(&pk);
+            continue;
+        }
+
+        ret = mbedtls_pk_verify(&pk, MBEDTLS_MD_SHA256, hash, hash_len, sig, sig_len);
+        mbedtls_pk_free(&pk);
+
+        if (ret == 0) {
+            verified = true;
+            break;
+        }
+    }
+
+    free(sig);
+    return verified;
+}
+
 static esp_err_t handle_get_config(httpd_req_t *req)
 {
     rid_config_t cfg;
@@ -280,12 +386,6 @@ static esp_err_t handle_get_config(httpd_req_t *req)
 
 static esp_err_t handle_post_config(httpd_req_t *req)
 {
-    if (get_lock_level() >= 1) {
-        httpd_resp_set_type(req, "application/json");
-        httpd_resp_send(req, "{\"status\":\"locked\"}", 20);
-        return ESP_OK;
-    }
-
     char *body = (char *)malloc(MAX_POST);
     if (!body) { httpd_resp_send_500(req); return ESP_FAIL; }
 
@@ -293,11 +393,28 @@ static esp_err_t handle_post_config(httpd_req_t *req)
     if (ret <= 0) { free(body); httpd_resp_send_500(req); return ESP_FAIL; }
     body[ret] = '\0';
 
+    if (get_lock_level() >= 1) {
+        char sig_hdr[512] = {0};
+        size_t hdr_len = httpd_req_get_hdr_value_len(req, "X-Signature");
+        if (hdr_len > 0 && hdr_len < sizeof(sig_hdr)) {
+            httpd_req_get_hdr_value_str(req, "X-Signature", sig_hdr, sizeof(sig_hdr));
+        }
+
+        rid_config_t cfg;
+        esp_rid_get_config(&cfg);
+
+        if (!verify_signed_body(body, sig_hdr, &cfg)) {
+            free(body);
+            httpd_resp_set_type(req, "application/json");
+            httpd_resp_send(req, "{\"status\":\"invalid_signature\"}", 33);
+            return ESP_OK;
+        }
+    }
+
     rid_config_t cfg;
     esp_rid_get_config(&cfg);
     apply_json(&cfg, body);
     free(body);
-
     esp_rid_set_config(&cfg);
 
     httpd_resp_set_type(req, "application/json");

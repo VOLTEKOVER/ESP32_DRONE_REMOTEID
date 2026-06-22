@@ -11,5 +11,6 @@
     "--background-index",
     "--query-driver=**",
     "--compile-commands-dir=${workspaceFolder}/ESP32_DRONE_REMOTE_ID_Firmware/build"
-  ]
+  ],
+  "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf"
 }

@@ -169,7 +169,7 @@
 - ✅ Lock level: basic check blocks destructive commands at level ≥ 1, OTA at level ≥ 2.
 - ✅ eFuse burn: writes `"RID!"` magic to `EFUSE_BLK3` on transition to level 2; `get_lock_level()` reads eFuse.
 - ✅ OTA SHA-256: `X-Expected-SHA256` header mandatory. Rejects missing/mismatched hash.
-- **Gap:** No public-key signature verification for lock level changes (UI has placeholder fields).
+- ✅ Signature verification: Level ≥ 1 requires `X-Signature` header with ECDSA P-256 signature over SHA-256 hash of JSON body. Uses `mbedtls/pk.h` for key parsing (PEM, DER, or `PUBLIC_KEYV1:` base64) and PSA for hashing.
 
 #### `protocol_detect.c` (75 lines)
 - UART auto-detect: `$M<` → MSP, `$G/$N` → NMEA, `0xFE/0xFD` → MAVLink.
@@ -231,7 +231,7 @@
 - ✅ WiFi NAN checkbox, bar chart, counters, purple styling.
 - ✅ Guide descriptions on all tabs.
 - ✅ Bug fixes: `setAllTx()` single call, Restart with `.catch()`, log pane grid.
-- **Gap:** Lock level signature verification UI exists but no backend implementation.
+- ✅ Lock level + eFuse + signature verification implemented.
 - **Gap:** Inline only (~1520 lines) — optional refactor to separate files.
 
 ---
@@ -469,7 +469,7 @@
 | 🔴 HIGH | `sdkconfig` tracked in git | root | ✅ Already in `.gitignore`, not tracked |
 | 🔴 HIGH | `LICENSE` missing | root | ✅ Apache 2.0 added |
 | 🔴 HIGH | `docs/manifest.json` missing targets | `docs/manifest.json` | ✅ All 6 targets present |
-| 🟡 MEDIUM | Lock level signature verification | `web_config.c` + `config.html` | ❌ UI exists, backend missing |
+| 🟡 MEDIUM | Lock level signature verification | `web_config.c` + `config.html` | ✅ ECDSA P-256 via mbedTLS PK |
 | 🟡 MEDIUM | BLE 5.0 LR Coded PHY = Beta | `ble_tx.c` | 🟡 Needs testing on S3/C3 |
 | 🟡 MEDIUM | Analyzer requires monitor mode + root | `capture.py` | 🟡 Hardware limitation |
 | 🟢 LOW | `c_cpp_properties.json` hardcoded path | `.vscode/c_cpp_properties.json` | ✅ Gitignored, local only — fixed locally |

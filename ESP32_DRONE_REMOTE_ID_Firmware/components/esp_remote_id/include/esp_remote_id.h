@@ -6,7 +6,7 @@
 
 #define ESP_RID_VERSION "1.0.0"
 #define ESP_RID_MAX_STR_LEN 20
-#define ESP_RID_MAX_KEY_LEN 64
+#define ESP_RID_MAX_KEY_LEN 256
 #define ESP_RID_NUM_KEYS 5
 
 #define RID_OPT_FORCE_ARM_OK      (1 << 0)
