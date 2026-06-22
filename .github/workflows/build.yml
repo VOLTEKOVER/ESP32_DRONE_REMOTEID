@@ -82,4 +82,4 @@ jobs:
             ESP32_DRONE_REMOTE_ID_Firmware/build/bootloader/bootloader.bin
             ESP32_DRONE_REMOTE_ID_Firmware/build/partition_table/partition-table.bin
             ESP32_DRONE_REMOTE_ID_Firmware/build/esp-drone-remoteid.bin
-           retention-days: 1
+          retention-days: 1
