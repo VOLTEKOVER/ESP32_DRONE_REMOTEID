@@ -32,8 +32,6 @@ idf_component_register(
         esp_driver_gpio
         mbedtls
         efuse
-        esp_console
-        linenoise
     EMBED_TXTFILES
         "webui/config.html"
 )

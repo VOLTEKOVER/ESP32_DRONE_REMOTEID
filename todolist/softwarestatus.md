@@ -52,14 +52,16 @@
 
 ## `components/esp_remote_id/` — Core Component
 
-### `CMakeLists.txt` (47 lines)
+### `CMakeLists.txt` (45 lines)
 - Registers all .c files in `src/`. REQUIRES `nvs_flash`, `efuse`, `esp_wifi`, `esp_bt`, `mdns`, etc.
 - ✅ Added `efuse` to REQUIRES for eFuse lock support.
-- ✅ Added `src/cli.c` to SRCS, `esp_console` + `linenoise` to REQUIRES for serial CLI.
+- ✅ Added `src/cli.c` to SRCS; `esp_console` + `linenoise` as managed deps via `idf_component.yml`.
 - **OK.**
 
-### `idf_component.yml` (12 lines)
-- Same as root `idf_component.yml`. Version `1.0.0-beta`, description "ESP32 Remote ID Transmitter".
+### `idf_component.yml` (9 lines)
+- Version `1.0.0-beta`, description "ESP32 Remote ID Transmitter".
+- Dependencies: `idf: ">=5.0"`, `espressif/esp_console: "*"`.
+- ✅ Created for CLI managed component dependency (IDF 6.0 moved `esp_console` to registry).
 - **OK.**
 
 ### `Kconfig.projbuild` (27 lines)
@@ -563,8 +565,8 @@
 | 6 | `ESP32_DRONE_REMOTE_ID_Firmware/idf_component.yml` | 12 | ✅ |
 | 7 | `ESP32_DRONE_REMOTE_ID_Firmware/main/CMakeLists.txt` | 3 | ✅ |
 | 8 | `ESP32_DRONE_REMOTE_ID_Firmware/main/main.c` | 90 | ✅ |
-| 9 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/CMakeLists.txt` | 47 | ✅ |
-| 10 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/idf_component.yml` | 12 | ✅ |
+| 9 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/CMakeLists.txt` | 45 | ✅ |
+| 10 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/idf_component.yml` | 9 | ✅ |
 | 11 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/Kconfig.projbuild` | 27 | ✅ |
 | 12 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/esp_remote_id.h` | 80 | ✅ |
 | 13 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/opendroneid.h` | 762 | ✅ |
