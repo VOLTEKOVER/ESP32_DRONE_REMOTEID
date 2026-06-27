@@ -95,8 +95,8 @@ static int cmd_status(int argc, char **argv)
     uint32_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
     int64_t us = esp_timer_get_time();
     uint32_t sec = (uint32_t)(us / 1000000);
-    printf("  Heap      : %lu KB / %lu KB\n", (unsigned long)(free / 1024), (unsigned long)(total / 1024));
-    printf("  Uptime    : %02u:%02u:%02u\n", sec / 3600, (sec % 3600) / 60, sec % 60);
+    printf("  Heap      : %lu KB / %lu KB\n", (unsigned long)(heap_free / 1024), (unsigned long)(heap_total / 1024));
+    printf("  Uptime    : %02lu:%02lu:%02lu\n", (unsigned long)(sec / 3600), (unsigned long)((sec % 3600) / 60), (unsigned long)(sec % 60));
     printf("  Lock lvl  : %d\n\n", cfg.lock_level);
     return 0;
 }
@@ -251,7 +251,7 @@ static int cmd_uptime(int argc, char **argv)
 {
     int64_t us = esp_timer_get_time();
     uint32_t sec = (uint32_t)(us / 1000000);
-    printf("  Uptime: %02u:%02u:%02u\n", sec / 3600, (sec % 3600) / 60, sec % 60);
+    printf("  Uptime: %02lu:%02lu:%02lu\n", (unsigned long)(sec / 3600), (unsigned long)((sec % 3600) / 60), (unsigned long)(sec % 60));
     return 0;
 }
 
