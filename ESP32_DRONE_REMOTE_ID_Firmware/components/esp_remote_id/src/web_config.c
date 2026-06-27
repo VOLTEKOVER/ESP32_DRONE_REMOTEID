@@ -697,7 +697,6 @@ static esp_err_t handle_post_command(httpd_req_t *req)
         reply = "unknown command";
     }
 
-out:
     char resp[128];
     snprintf(resp, sizeof(resp), "{\"status\":\"%s\"}", reply);
     httpd_resp_set_type(req, "application/json");
