@@ -1,5 +1,0 @@
-version: "1.0.0-beta"
-description: "ESP32 Remote ID Transmitter - Open DroneID ASTM F3411-22a Beacon"
-dependencies:
-  idf: ">=5.0"
-  espressif/esp_console: "*"

@@ -52,16 +52,10 @@
 
 ## `components/esp_remote_id/` — Core Component
 
-### `CMakeLists.txt` (45 lines)
+### `CMakeLists.txt` (38 lines)
 - Registers all .c files in `src/`. REQUIRES `nvs_flash`, `efuse`, `esp_wifi`, `esp_bt`, `mdns`, etc.
 - ✅ Added `efuse` to REQUIRES for eFuse lock support.
-- ✅ Added `src/cli.c` to SRCS; `esp_console` + `linenoise` as managed deps via `idf_component.yml`.
-- **OK.**
-
-### `idf_component.yml` (9 lines)
-- Version `1.0.0-beta`, description "ESP32 Remote ID Transmitter".
-- Dependencies: `idf: ">=5.0"`, `espressif/esp_console: "*"`.
-- ✅ Created for CLI managed component dependency (IDF 6.0 moved `esp_console` to registry).
+- ✅ Added `src/cli.c` to SRCS (no external deps — raw UART REPL).
 - **OK.**
 
 ### `Kconfig.projbuild` (27 lines)
@@ -182,11 +176,11 @@
 - ✅ Signature verification: Level ≥ 1 requires `X-Signature` header with ECDSA P-256 signature over SHA-256 hash of JSON body. Uses `mbedtls/pk.h` for key parsing (PEM, DER, or `PUBLIC_KEYV1:` base64) and PSA for hashing.
 - ✅ Command signature verification: `/api/command` now also verifies `X-Signature` for restart/reboot/reset/factory commands when locked. `/api/reset` endpoint also accepts signatures (body signed: `"factory_reset"`). Returns `invalid_signature` instead of `locked`.
 
-#### `cli.c` (280 lines)
-- Serial REPL console with linenoise line editing.
-- Commands: `status`, `config`, `restart`/`reboot`, `reset`/`factory`, `protocol`, `heap`, `log_level`, `patrol`, `transmit`, `mac`, `uptime`.
+#### `cli.c` (317 lines)
+- Raw UART REPL (no external deps: no esp_console, no linenoise).
+- 14 commands + simple argument parser via `fgets()` + `strcmp` dispatch.
+- Commands: `help`, `status`, `config`, `restart`/`reboot`, `reset`/`factory`, `protocol`, `heap`, `log_level`, `patrol`, `transmit`, `mac`, `uptime`.
 - Spawns `cli_task` (4 KB stack) and returns immediately.
-- Reads/writes config via `esp_rid_set_config()`, `esp_rid_get_config()`.
 - **OK.**
 
 #### `protocol_detect.c` (75 lines)
@@ -571,9 +565,8 @@
 | 6 | `ESP32_DRONE_REMOTE_ID_Firmware/idf_component.yml` | 12 | ✅ |
 | 7 | `ESP32_DRONE_REMOTE_ID_Firmware/main/CMakeLists.txt` | 3 | ✅ |
 | 8 | `ESP32_DRONE_REMOTE_ID_Firmware/main/main.c` | 90 | ✅ |
-| 9 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/CMakeLists.txt` | 45 | ✅ |
-| 10 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/idf_component.yml` | 9 | ✅ |
-| 11 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/Kconfig.projbuild` | 27 | ✅ |
+| 9 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/CMakeLists.txt` | 38 | ✅ |
+| 10 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/Kconfig.projbuild` | 27 | ✅ |
 | 12 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/esp_remote_id.h` | 80 | ✅ |
 | 13 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/opendroneid.h` | 762 | ✅ |
 | 14 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/odid_wifi.h` | 106 | ✅ |
@@ -589,7 +582,7 @@
 | 24 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/led_status.h` | 30 | ✅ |
 | 25 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/rid_patrol.h` | 10 | ✅ |
 | 26 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/include/cli.h` | 7 | ✅ |
-| 27 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/cli.c` | 283 | ✅ |
+| 27 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/cli.c` | 317 | ✅ |
 | 28 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/esp_remote_id.c` | 458 | ✅ |
 | 29 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/wifi.c` | 614 | ✅ |
 | 30 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/wifi_tx.c` | 204 | ✅ |

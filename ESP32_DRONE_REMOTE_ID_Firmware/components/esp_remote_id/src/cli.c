@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "esp_log.h"
 #include "esp_system.h"
-#include "esp_console.h"
 #include "esp_timer.h"
 #include "esp_heap_caps.h"
 #include "esp_wifi.h"
-#include "linenoise/linenoise.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "cli.h"
@@ -16,6 +15,8 @@
 
 #define TAG "CLI"
 #define CLI_STACK_SIZE 4096
+#define MAX_ARGS 16
+#define MAX_LINE 256
 
 static const char *proto_name(rid_protocol_t p)
 {
@@ -30,16 +31,58 @@ static const char *proto_name(rid_protocol_t p)
     }
 }
 
+static int cmd_help(int argc, char **argv);
+static int cmd_status(int argc, char **argv);
+static int cmd_config(int argc, char **argv);
+static int cmd_restart(int argc, char **argv);
+static int cmd_reset(int argc, char **argv);
+static int cmd_protocol(int argc, char **argv);
+static int cmd_heap(int argc, char **argv);
+static int cmd_log_level(int argc, char **argv);
+static int cmd_patrol(int argc, char **argv);
+static int cmd_transmit(int argc, char **argv);
+static int cmd_mac(int argc, char **argv);
+static int cmd_uptime(int argc, char **argv);
+
+typedef struct { const char *name; const char *help; int (*func)(int, char**); } cmd_t;
+
+static const cmd_t cmds[] = {
+    { "help",     "Show this help", cmd_help },
+    { "status",   "Show system status (protocol, GPS, TX, heap, uptime)", cmd_status },
+    { "config",   "Show current configuration", cmd_config },
+    { "restart",  "Restart the device", cmd_restart },
+    { "reboot",   "Restart the device (alias)", cmd_restart },
+    { "reset",    "Factory reset and restart", cmd_reset },
+    { "factory",  "Factory reset and restart (alias)", cmd_reset },
+    { "protocol", "Show/set: protocol [auto|mavlink|msp|nmea|none]", cmd_protocol },
+    { "heap",     "Show heap memory info", cmd_heap },
+    { "log_level","Set: log_level <tag> <NONE|ERROR|WARN|INFO|DEBUG|VERBOSE>", cmd_log_level },
+    { "patrol",   "Toggle demo patrol mode: patrol [on|off]", cmd_patrol },
+    { "transmit", "Show/set TX: transmit <wifi_bcn|wifi_nan|ble4|ble5|all> <on|off>", cmd_transmit },
+    { "mac",      "Show MAC addresses", cmd_mac },
+    { "uptime",   "Show system uptime", cmd_uptime },
+};
+#define NCMDS (sizeof(cmds) / sizeof(cmds[0]))
+
+static int cmd_help(int argc, char **argv)
+{
+    printf("\n  Commands:\n");
+    for (size_t i = 0; i < NCMDS; i++) {
+        printf("  %-12s %s\n", cmds[i].name, cmds[i].help);
+    }
+    printf("\n");
+    return 0;
+}
+
 static int cmd_status(int argc, char **argv)
 {
     rid_config_t cfg;
     rid_state_t state;
     esp_rid_get_config(&cfg);
     esp_rid_get_state(&state);
-
     printf("\n  ESP DRONE REMOTEID v%s\n\n", ESP_RID_VERSION);
     printf("  Protocol  : %s\n", proto_name(state.active_protocol));
-    printf("  GPS Fix   : %s  (fix_type=%d, sats=%u)\n",
+    printf("  GPS Fix   : %s  (fix=%d, sats=%u)\n",
            state.gps_valid ? "YES" : "NO", state.gps.fix_type, state.gps.satellites);
     printf("  Position  : %.6f / %.6f  alt=%.1f m\n",
            state.gps.latitude, state.gps.longitude, (double)state.gps.altitude_msl);
@@ -48,11 +91,11 @@ static int cmd_status(int argc, char **argv)
            (unsigned long)state.transmissions_count,
            (unsigned long)state.wifi_bcn_count, (unsigned long)state.wifi_nan_count,
            (unsigned long)state.ble4_count, (unsigned long)state.ble5_count);
-    uint32_t heap_free = esp_get_free_heap_size();
-    uint32_t heap_total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
+    uint32_t free = esp_get_free_heap_size();
+    uint32_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
     int64_t us = esp_timer_get_time();
     uint32_t sec = (uint32_t)(us / 1000000);
-    printf("  Heap      : %lu KB / %lu KB\n", (unsigned long)(heap_free / 1024), (unsigned long)(heap_total / 1024));
+    printf("  Heap      : %lu KB / %lu KB\n", (unsigned long)(free / 1024), (unsigned long)(total / 1024));
     printf("  Uptime    : %02u:%02u:%02u\n", sec / 3600, (sec % 3600) / 60, sec % 60);
     printf("  Lock lvl  : %d\n\n", cfg.lock_level);
     return 0;
@@ -114,7 +157,7 @@ static int cmd_protocol(int argc, char **argv)
     else if (strcasecmp(argv[1], "msp") == 0) p = RID_PROTOCOL_MSP;
     else if (strcasecmp(argv[1], "nmea") == 0) p = RID_PROTOCOL_NMEA;
     else if (strcasecmp(argv[1], "none") == 0) p = RID_PROTOCOL_NONE;
-    else { printf("Unknown protocol: %s  (use: auto, mavlink, msp, nmea, none)\n", argv[1]); return 1; }
+    else { printf("Unknown: %s  (use: auto, mavlink, msp, nmea, none)\n", argv[1]); return 1; }
     cfg.protocol = p;
     esp_rid_set_config(&cfg);
     printf("Protocol set to: %s\n", proto_name(p));
@@ -161,7 +204,7 @@ static int cmd_patrol(int argc, char **argv)
     else
         cfg.options ^= RID_OPT_DEMO_MODE;
     esp_rid_set_config(&cfg);
-    printf("Demo patrol mode: %s\n", (cfg.options & RID_OPT_DEMO_MODE) ? "ON" : "OFF");
+    printf("Demo patrol: %s\n", (cfg.options & RID_OPT_DEMO_MODE) ? "ON" : "OFF");
     return 0;
 }
 
@@ -170,15 +213,14 @@ static int cmd_transmit(int argc, char **argv)
     rid_config_t cfg;
     esp_rid_get_config(&cfg);
     if (argc < 2) {
-        printf("  TX modes: %s%s%s%s\n",
+        printf("  TX: %s%s%s%s\n  Usage: transmit <wifi_bcn|wifi_nan|ble4|ble5|all> <on|off>\n",
             (cfg.tx_modes & RID_TRANSMIT_WIFI_BCN) ? "WiFi_BCN " : "",
             (cfg.tx_modes & RID_TRANSMIT_WIFI_NAN) ? "WiFi_NAN " : "",
             (cfg.tx_modes & RID_TRANSMIT_BLE4) ? "BLE4 " : "",
             (cfg.tx_modes & RID_TRANSMIT_BLE5) ? "BLE5 " : "");
-        printf("  Usage: transmit <wifi_bcn|wifi_nan|ble4|ble5|all> <on|off>\n");
         return 0;
     }
-    if (argc < 3) { printf("Missing on/off argument\n"); return 1; }
+    if (argc < 3) { printf("Missing on/off\n"); return 1; }
     uint8_t mask = 0;
     if (strcasecmp(argv[1], "wifi_bcn") == 0) mask = RID_TRANSMIT_WIFI_BCN;
     else if (strcasecmp(argv[1], "wifi_nan") == 0) mask = RID_TRANSMIT_WIFI_NAN;
@@ -187,27 +229,21 @@ static int cmd_transmit(int argc, char **argv)
     else if (strcasecmp(argv[1], "all") == 0) mask = 0x0F;
     else { printf("Unknown mode: %s\n", argv[1]); return 1; }
     bool on = (strcasecmp(argv[2], "on") == 0);
-    if (mask == 0x0F) {
-        cfg.tx_modes = on ? 0x0F : 0;
-    } else if (on) {
-        cfg.tx_modes |= mask;
-    } else {
-        cfg.tx_modes &= ~mask;
-    }
+    if (mask == 0x0F) { cfg.tx_modes = on ? 0x0F : 0; }
+    else if (on) { cfg.tx_modes |= mask; }
+    else { cfg.tx_modes &= ~mask; }
     esp_rid_set_config(&cfg);
-    printf("TX mode '%s' set to %s\n", argv[1], on ? "ON" : "OFF");
+    printf("TX '%s' set to %s\n", argv[1], on ? "ON" : "OFF");
     return 0;
 }
 
 static int cmd_mac(int argc, char **argv)
 {
-    uint8_t mac_ap[6] = {0}, mac_sta[6] = {0};
-    esp_wifi_get_mac(WIFI_IF_AP, mac_ap);
-    esp_wifi_get_mac(WIFI_IF_STA, mac_sta);
-    printf("  MAC AP  : %02X:%02X:%02X:%02X:%02X:%02X\n",
-           mac_ap[0], mac_ap[1], mac_ap[2], mac_ap[3], mac_ap[4], mac_ap[5]);
-    printf("  MAC STA : %02X:%02X:%02X:%02X:%02X:%02X\n",
-           mac_sta[0], mac_sta[1], mac_sta[2], mac_sta[3], mac_sta[4], mac_sta[5]);
+    uint8_t ap[6]={0}, sta[6]={0};
+    esp_wifi_get_mac(WIFI_IF_AP, ap);
+    esp_wifi_get_mac(WIFI_IF_STA, sta);
+    printf("  MAC AP  : %02X:%02X:%02X:%02X:%02X:%02X\n", ap[0],ap[1],ap[2],ap[3],ap[4],ap[5]);
+    printf("  MAC STA : %02X:%02X:%02X:%02X:%02X:%02X\n", sta[0],sta[1],sta[2],sta[3],sta[4],sta[5]);
     return 0;
 }
 
@@ -219,65 +255,63 @@ static int cmd_uptime(int argc, char **argv)
     return 0;
 }
 
-static void register_commands(void)
+/* ---------- parser ---------- */
+static int parse_line(char *line, char **argv)
 {
-    const esp_console_cmd_t cmds[] = {
-        { .command = "status",   .help = "Show system status (protocol, GPS, TX, heap, uptime)", .func = cmd_status },
-        { .command = "config",   .help = "Show current configuration", .func = cmd_config },
-        { .command = "restart",  .help = "Restart the device", .func = cmd_restart },
-        { .command = "reboot",   .help = "Restart the device (alias)", .func = cmd_restart },
-        { .command = "reset",    .help = "Factory reset and restart", .func = cmd_reset },
-        { .command = "factory",  .help = "Factory reset and restart (alias)", .func = cmd_reset },
-        { .command = "protocol", .help = "Show/set: protocol [auto|mavlink|msp|nmea|none]", .func = cmd_protocol },
-        { .command = "heap",     .help = "Show heap memory info", .func = cmd_heap },
-        { .command = "log_level",.help = "Set log level: log_level <tag> <LEVEL>", .func = cmd_log_level },
-        { .command = "patrol",   .help = "Toggle demo patrol mode: patrol [on|off]", .func = cmd_patrol },
-        { .command = "transmit", .help = "Show/set TX modes: transmit <mode> <on|off>", .func = cmd_transmit },
-        { .command = "mac",      .help = "Show MAC addresses", .func = cmd_mac },
-        { .command = "uptime",   .help = "Show system uptime", .func = cmd_uptime },
-    };
-    for (size_t i = 0; i < sizeof(cmds) / sizeof(cmds[0]); i++) {
-        esp_console_cmd_register(&cmds[i]);
+    int argc = 0;
+    char *p = line;
+    while (*p) {
+        while (*p && isspace((unsigned char)*p)) p++;
+        if (!*p) break;
+        if (argc < MAX_ARGS - 1) argv[argc++] = p;
+        while (*p && !isspace((unsigned char)*p)) p++;
+        if (*p) { *p++ = '\0'; }
     }
+    argv[argc] = NULL;
+    return argc;
 }
 
+/* ---------- task ---------- */
 static void cli_task(void *arg)
 {
+    char line[MAX_LINE];
+    char *argv[MAX_ARGS];
+
     printf("\n  ESP DRONE REMOTEID CLI\n");
-    printf("  Type 'help' for commands, Ctrl+C to exit\n\n");
+    printf("  Type 'help' for commands\n\n");
 
     while (1) {
-        char *line = linenoise("rid> ");
-        if (line == NULL) {
+        printf("rid> ");
+        fflush(stdout);
+
+        if (fgets(line, sizeof(line), stdin) == NULL) {
             vTaskDelay(pdMS_TO_TICKS(10));
             continue;
         }
-        linenoiseHistoryAdd(line);
-        int ret;
-        esp_err_t err = esp_console_run(line, &ret);
-        if (err == ESP_ERR_NOT_FOUND) {
-            printf("Unknown command: %s  (type 'help')\n", line);
-        } else if (err == ESP_ERR_INVALID_ARG) {
-            printf("Command error\n");
+
+        size_t len = strlen(line);
+        while (len > 0 && (line[len-1] == '\n' || line[len-1] == '\r'))
+            line[--len] = '\0';
+        if (len == 0) continue;
+
+        int argc = parse_line(line, argv);
+        if (argc == 0) continue;
+
+        bool found = false;
+        for (size_t i = 0; i < NCMDS; i++) {
+            if (strcmp(argv[0], cmds[i].name) == 0) {
+                cmds[i].func(argc, argv);
+                found = true;
+                break;
+            }
         }
-        linenoiseFree(line);
+        if (!found)
+            printf("Unknown: %s  (type 'help')\n", argv[0]);
     }
 }
 
 void cli_init(void)
 {
-    esp_console_config_t console_config = {
-        .max_cmdline_args = 8,
-        .max_cmdline_length = 256,
-    };
-    ESP_ERROR_CHECK(esp_console_init(&console_config));
-
-    linenoiseSetMultiLine(1);
-    linenoiseSetMaxLineLen(console_config.max_cmdline_length);
-    linenoiseHistorySetMaxLen(20);
-
-    register_commands();
-
     xTaskCreate(cli_task, "cli_task", CLI_STACK_SIZE, NULL, 5, NULL);
     ESP_LOGI(TAG, "CLI initialized");
 }
