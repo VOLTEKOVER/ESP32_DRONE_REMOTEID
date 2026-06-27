@@ -166,10 +166,10 @@ static int cmd_protocol(int argc, char **argv)
 
 static int cmd_heap(int argc, char **argv)
 {
-    uint32_t free = esp_get_free_heap_size();
-    uint32_t total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
+    uint32_t heap_free = esp_get_free_heap_size();
+    uint32_t heap_total = heap_caps_get_total_size(MALLOC_CAP_DEFAULT);
     uint32_t min = esp_get_minimum_free_heap_size();
-    printf("  Heap free : %lu KB / %lu KB\n", (unsigned long)(free / 1024), (unsigned long)(total / 1024));
+    printf("  Heap free : %lu KB / %lu KB\n", (unsigned long)(heap_free / 1024), (unsigned long)(heap_total / 1024));
     printf("  Heap min  : %lu KB\n", (unsigned long)(min / 1024));
     return 0;
 }
