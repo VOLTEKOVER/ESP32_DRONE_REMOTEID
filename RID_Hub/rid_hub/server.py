@@ -21,6 +21,9 @@ try:
     WS_AVAILABLE = True
 except ImportError:
     WS_AVAILABLE = False
+    # Stub so the module can be imported without simple_websocket_server
+    WebSocket = object
+    WebSocketServer = object
 
 
 @dataclass
