@@ -21,7 +21,7 @@
   Parses MAVLink · MSP · NMEA · DroneCAN · broadcasts via <b>WiFi Beacon + NAN + BLE 4.0/5.0</b>.<br>
   Features Kalman filter, Ed25519 auth, OTA, MAVLink ARM_STATUS, WS2812 LED, GPIO lighting.<br>
   Targets: ESP32, ESP32-S3, ESP32-C6.<br>
-  Companion ground station: <b>RID Hub</b> (Electron + Python).<br>
+  Companion ground station: <b>RID Hub</b> (Electron, no Python).<br>
 See the <a href="https://VOLTEKOVER.github.io/ESP_DRONE_REMOTEID/">online wiki</a> for wiring, flashing, and configuration.
 </p>
 
@@ -136,12 +136,12 @@ ESP_DRONE_REMOTEID/
 │   │   ├── webui/config.html        # Embedded web interface (~1520 lines)
 │   │   └── mavlink/                 # MAVLink v2 dialect headers
 │   └── partitions*.csv              # OTA partition layouts
-├── RID_Hub/                         # Ground Station (Electron + Python backend)
-│   ├── main.js / package.json       # Electron shell
-│   ├── rid_hub/                     # Python backend: capture, decode, serve, tools
-│   │   ├── web/                     # Electron renderer (HTML/JS/CSS frontend)
-│   │   └── tools/                   # Ground tools: scanner, bridge, provision, verify
-│   └── requirements.txt
+├── RID_Hub/                         # Ground Station (Electron, no Python)
+│   ├── main.js                      # Electron main process (IPC nativa)
+│   ├── preload.js                   # contextBridge IPC esposto al renderer
+│   ├── package.json                 # Dipendenze Electron + serialport
+│   ├── src/                         # Core Node.js: decoder, tracker, capture
+│   └── renderer/                    # Frontend: HTML/JS/CSS (Leaﬂet + Chart.js)
 ├── docs/                            # GitHub Pages site
 │   ├── index.html                   # WebSerial flasher + wiki
 │   ├── guide.html                   # Technical wiki (sections 3–16)

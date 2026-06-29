@@ -1,103 +1,166 @@
-const { app, BrowserWindow, dialog } = require("electron");
-const { spawn } = require("child_process");
-const path = require("path");
-const fs = require("fs");
+'use strict';
+const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const path = require('path');
+const fs = require('fs');
+const { Tracker } = require('./src/tracker');
+const { WiFiCapture, BLECapture, SerialCapture } = require('./src/capture');
+const { extractOdidFromBeacon, formatSummary, decodeOdidMessage } = require('./src/decoder');
 
 let mainWindow = null;
-let pythonProcess = null;
-const WS_PORT = 8765;
+const tracker = new Tracker();
+const wifiCapture = new WiFiCapture();
+const bleCapture = new BLECapture();
+const serialCapture = new SerialCapture();
 
-function findPython() {
-  return process.platform === "win32" ? "python" : "python3";
-}
+let captureSources = [];
 
-function startPythonBackend() {
-  const pythonDir = path.join(__dirname);
-  const pythonExe = findPython();
-
-  pythonProcess = spawn(pythonExe, [
-    "-m", "rid_hub",
-    "serve",
-    "--port", String(WS_PORT),
-    "--bind", "127.0.0.1",
-  ], {
-    cwd: pythonDir,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, PYTHONUNBUFFERED: "1" },
-  });
-
-  pythonProcess.stdout.on("data", (data) => {
-    console.log(`[rid-hub-backend] ${data.toString().trim()}`);
-  });
-
-  pythonProcess.stderr.on("data", (data) => {
-    console.error(`[rid-hub-backend] ${data.toString().trim()}`);
-  });
-
-  pythonProcess.on("exit", (code) => {
-    console.log(`[rid-hub-backend] exited with code ${code}`);
-    pythonProcess = null;
-  });
-
-  pythonProcess.on("error", (err) => {
-    console.error(`[rid-hub-backend] failed to start: ${err.message}`);
-    dialog.showErrorBox(
-      "RID Hub — Backend Error",
-      `Could not start the Python backend:\n\n${err.message}\n\nMake sure Python 3 is installed and in your PATH.`
-    );
-  });
-}
-
-function stopPythonBackend() {
-  if (pythonProcess) {
-    pythonProcess.kill();
-    pythonProcess = null;
+function emitToRenderer(channel, data) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(channel, data);
   }
 }
 
-function createWindow() {
-  const webPath = path.join(__dirname, "rid_hub", "web", "index.html");
+function onCaptureData(data) {
+  const clean = tracker.onCapture(data);
+  emitToRenderer('rid-packet', clean);
+}
 
+wifiCapture.onPacket = onCaptureData;
+bleCapture.onPacket = onCaptureData;
+serialCapture.onPacket = onCaptureData;
+
+function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 860,
-    minWidth: 800,
-    minHeight: 600,
-    title: "RID Hub",
+    width: 1280, height: 860, minWidth: 800, minHeight: 600,
+    title: 'RID Hub',
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
-
-  mainWindow.loadFile(webPath);
-
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
+  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.on('closed', () => { mainWindow = null; });
 }
 
 app.whenReady().then(() => {
-  startPythonBackend();
-
-  // Give Python a moment to start the WebSocket server
-  setTimeout(createWindow, 1000);
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
+  createWindow();
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-app.on("window-all-closed", () => {
-  stopPythonBackend();
-  if (process.platform !== "darwin") {
-    app.quit();
+app.on('window-all-closed', () => {
+  stopAllCapture();
+  if (process.platform !== 'darwin') app.quit();
+});
+
+app.on('before-quit', () => { stopAllCapture(); });
+
+function stopAllCapture() {
+  wifiCapture.stop();
+  bleCapture.stop();
+  serialCapture.stop();
+  captureSources = [];
+}
+
+ipcMain.handle('get-snapshot', () => tracker.getSnapshot());
+ipcMain.handle('get-device-detail', (_, mac) => tracker.getDeviceDetail(mac));
+ipcMain.handle('reset-stats', () => { tracker.reset(); return true; });
+
+ipcMain.handle('start-recording', () => { tracker.startRecording(); return true; });
+ipcMain.handle('stop-recording', () => { tracker.stopRecording(); return true; });
+ipcMain.handle('get-session', () => tracker.sessionPackets);
+
+ipcMain.handle('export-csv', () => tracker.generateCSV());
+ipcMain.handle('export-kml', () => tracker.generateKML());
+
+ipcMain.handle('list-ports', async () => {
+  try {
+    const { SerialPort } = require('serialport');
+    const ports = await SerialPort.list();
+    return ports.map(p => ({ path: p.path, manufacturer: p.manufacturer || '' }));
+  } catch (_) { return []; }
+});
+
+ipcMain.handle('connect-serial', async (_, path, baud) => {
+  serialCapture.stop();
+  await serialCapture.start(path, baud || 115200);
+  captureSources.push('serial');
+  return true;
+});
+
+ipcMain.handle('disconnect-serial', () => {
+  serialCapture.stop();
+  captureSources = captureSources.filter(s => s !== 'serial');
+  return true;
+});
+
+ipcMain.handle('start-wifi-capture', (_, iface) => {
+  wifiCapture.start(iface);
+  captureSources.push('wifi');
+  return true;
+});
+
+ipcMain.handle('stop-wifi-capture', () => {
+  wifiCapture.stop();
+  captureSources = captureSources.filter(s => s !== 'wifi');
+  return true;
+});
+
+ipcMain.handle('start-ble-capture', () => {
+  bleCapture.start();
+  captureSources.push('ble');
+  return true;
+});
+
+ipcMain.handle('stop-ble-capture', () => {
+  bleCapture.stop();
+  captureSources = captureSources.filter(s => s !== 'ble');
+  return true;
+});
+
+ipcMain.handle('import-pcap', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    filters: [{ name: 'PCAP Files', extensions: ['pcap', 'pcapng'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || !result.filePaths.length) return;
+  const filePath = result.filePaths[0];
+  try {
+    const pcapModule = require('pcap');
+    const parser = new pcapModule.PCAPOffline(filePath);
+    parser.on('packet', (raw) => {
+      const msgs = extractOdidFromBeacon(Buffer.from(raw));
+      if (msgs && msgs.length) {
+        const data = {
+          timestamp: Date.now() / 1000,
+          source_mac: 'pcap',
+          rssi: null,
+          channel: 0,
+          summary: formatSummary(msgs),
+          messages: msgs,
+        };
+        tracker.onCapture(data);
+      }
+    });
+    parser.on('complete', () => { emitToRenderer('rid-pcap-done', {}); });
+    return filePath;
+  } catch (e) {
+    return { error: e.message };
   }
 });
 
-app.on("before-quit", () => {
-  stopPythonBackend();
+ipcMain.handle('save-file', async (_, data, defaultName, filter) => {
+  const result = await dialog.showSaveDialog(mainWindow, {
+    defaultPath: defaultName,
+    filters: filter || [{ name: 'All Files', extensions: ['*'] }],
+  });
+  if (result.canceled || !result.filePath) return false;
+  try {
+    fs.writeFileSync(result.filePath, data, 'utf8');
+    return true;
+  } catch (e) {
+    return { error: e.message };
+  }
 });

@@ -385,199 +385,86 @@
 
 ---
 
-## `RID_Hub/` — Ground Station (Electron + Python)
+## `RID_Hub/` — Ground Station (Electron, no Python)
 
-### Overview
-- **Renamed from `ESP_DRONE_REMOTEID_Analyzer` to `RID_Hub`**.
-- **Electron wrapper** (`main.js` + `package.json` + `preload.js`) spawns Python backend.
-- Python backend runs as `python -m rid_hub serve` (WebSocket server + WiFi capture).
-- Electron loads `rid_hub/web/index.html` as the renderer, connects via WebSocket.
+**Architettura completamente riscritta** — Python eliminato, WebSocket eliminato, tutto in Electron nativo.
 
 ### Structure
 ```
 RID_Hub/
-├── package.json          # Electron project manifest
-├── main.js               # Electron main process (spawns Python, creates window)
-├── preload.js            # Exposes WS_URL to renderer
-├── rid_hub/              # Python package (rename of ESP_DRONE_REMOTEID_Analyzer)
-│   ├── __init__.py       # Version 1.0.0
-│   ├── __main__.py       # Entry: `python -m rid_hub serve|gui|tool`
-│   ├── capture.py        # WiFi beacon capture via Scapy
-│   ├── decoder.py        # ASTM F3411-22a pure Python decoder
-│   ├── server.py         # WebSocket broadcast server
-│   ├── gui.py            # Legacy pywebview GUI (Electron recommended)
-│   ├── rid_cli.py        # Headless CLI
-│   ├── build.spec        # PyInstaller spec
-│   ├── web/              # Frontend (HTML/JS/CSS)
-│   └── tools/            # Ground tools
-└── requirements.txt      # Python dependencies
+├── main.js              # Electron main process (IPC nativa)
+├── package.json         # Dipendenze Electron (serialport opt)
+├── preload.js           # contextBridge per IPC renderer
+├── src/
+│   ├── decoder.js       # ASTM F3411-22a decoder (port da Python)
+│   ├── tracker.js       # RIDDevice tracking (port da Python)
+│   └── capture.js       # WiFi/BLE/Serial (Node moduli opzionali)
+├── renderer/
+│   ├── index.html       # UI: 6 tab (Devices, Map, Timeline, Stats, Capture, About)
+│   ├── app.js           # IPC Client + Chart.js + Leaflet
+│   └── style.css        # Dark/light theme (riusato da v2)
+├── node_modules/        # (gitignored)
+└── dist/                # electron-builder output (gitignored)
 ```
 
-### Python Backend (`rid_hub/`)
+### Core (`src/`)
 
-#### `__init__.py` (3 lines)
-- Package marker. Exports `__version__ = "1.0.0"`.
-- Renamed from `ESP_DRONE_REMOTEID_Analyzer` → `rid_hub`.
+#### `decoder.js` (~200 lines)
+- Port completo di `decoder.py` in JavaScript puro.
+- Tutti i tipi messaggio ASTM F3411-22a: Basic ID, Location, Auth, Self-ID, System, Operator ID, Pack.
+- Esporta: `decodeOdidMessage`, `decodeBeaconPayload`, `extractOdidFromBeacon`, `formatSummary`.
 
-#### `__main__.py` (40 lines)
-- Entry point: `python -m rid_hub <serve|gui|scanner|mapper|bridge|...>`.
-- `serve` — starts WebSocket server + capture (for Electron).
-- `gui` — legacy pywebview desktop app.
-- Tools: `scanner`, `mapper`, `bridge`, `timing`, `ble-check`, `serial`, `provision`, `verify`.
-- **OK.** Electron-friendly entry point.
+#### `tracker.js` (~190 lines)
+- `RIDDevice` class + `Tracker` class (port di `server.py`).
+- Tracking per-MAC con 500-point trail, statistiche RSSI, CSV/KML export, session recording.
+- Nessuna dipendenza esterna.
 
-#### `capture.py` (~200 lines)
-- WiFi beacon capture via Scapy (`sniff` on Dot11Beacon frames).
-- `RIDCapture` class: interface listing, monitor-mode helpers.
-- PCAP batch write, multi-channel hopping.
-- **Gap:** Requires monitor-mode WiFi adapter + root/admin privileges.
+#### `capture.js` (~140 lines)
+- `WiFiCapture`: usa `pcap` npm (opzionale) per beacon 802.11.
+- `BLECapture`: usa `@abandonware/noble` (opzionale) per BLE RID.
+- `SerialCapture`: usa `serialport` (opzionale) per ESP32 via USB.
+- Ogni classe ha `available` getter + graceful fallback.
 
-#### `decoder.py` (510 lines)
-- Pure Python ASTM F3411-22a packet decoder.
-- All message types: Basic ID, Location, Auth, Self-ID, System, Operator ID, Pack.
-- **OK.**
+### Renderer (`renderer/`)
 
-#### `server.py` (~387 lines)
-- WebSocket broadcast server.
-- `RIDDevice` dataclass with 500-point trail, session recording, CSV/KML export.
-- Snapshot on WS connect, full command dispatch.
-- **OK.**
+#### `index.html` (~200 lines)
+- 6 tab: Devices, Map, Timeline, Statistics, **Capture**, About.
+- Capture tab con card per WiFi, BLE, Serial, import PCAP.
+- Leaflet map, dettaglio dispositivo a scomparsa, recording.
 
-#### `rid_cli.py` (115 lines)
-- Headless CLI: `capture`, `serve` subcommands.
-- **OK.**
+#### `app.js` (~500 lines)
+- Comunica via `window.RID.*` IPC bridge (da preload.js).
+- Stesse funzionalità della v2 WebSocket: tabella, mappa, grafici, CSV/KML, recording.
+- Capture tab: start/stop WiFi, BLE, Serial + refresh porte seriali.
+- Notifiche desktop, dark mode, filtri RSSI/attivi.
 
-#### `gui.py` (~91 lines)
-- Legacy pywebview desktop app (Electron now recommended).
-- Starts backend + opens native window.
-- **OK.**
-
-#### `build.spec` (56 lines)
-- PyInstaller spec for Windows exe (name: `RID_Hub`).
-- **OK.**
-
-### Web Frontend (`rid_hub/web/`)
-
-#### `index.html` (~202 lines)
-- RID Hub branding. 5 tabs: Devices, Map, Timeline, Statistics, About.
-- Leaflet map, detail panel, recording controls.
-- **OK.**
-
-#### `app.js` (~834 lines)
-- WebSocket client, device table, Leaflet map, Chart.js charts.
-- Session recording, replay, CSV/KML export.
-- **OK.**
-
-#### `style.css` (~271 lines)
-- Clean dark/light theme, responsive.
-- **OK.**
+#### `style.css` (~271 lines) — identico alla v2.
 
 ### Electron Shell
 
-#### `main.js` (90 lines)
-- Spawns `python -m rid_hub serve` as child process.
-- Creates BrowserWindow loading `rid_hub/web/index.html`.
-- Graceful shutdown on window close / app quit.
-- **OK.**
+#### `main.js` (~90 lines)
+- **Niente Python**: `Tracker`, `WiFiCapture`, `BLECapture`, `SerialCapture` importati direttamente.
+- `ipcMain.handle()` per tutte le operazioni: snapshot, dettaglio, export, recording, capture.
+- `ipcMain.handle('save-file', ...)` usa `dialog.showSaveDialog`.
+- `ipcMain.handle('import-pcap', ...)` usa `dialog.showOpenDialog`.
 
-#### `package.json` (60 lines)
-- Electron project config with electron-builder.
-- Targets: Windows (NSIS), macOS (DMG), Linux (AppImage).
-- **OK.**
+#### `preload.js` (~40 lines)
+- Espone `window.RID` via contextBridge con tutti i canali IPC.
+- Metodi: `getSnapshot`, `getDeviceDetail`, `resetStats`, `startRecording`, `stopRecording`,
+  `exportCSV`, `exportKML`, `getSession`, `saveFile`, `listPorts`,
+  `connectSerial`, `disconnectSerial`, `startWiFi`, `stopWiFi`,
+  `startBLE`, `stopBLE`, `importPcap`.
+- Eventi: `onPacket`, `onPcapDone`.
 
-#### `preload.js` (6 lines)
-- Exposes `WS_CONFIG` via contextBridge to renderer.
-- **OK.**
+#### `package.json` (~35 lines)
+- Dipendenze: `serialport` (obbligatoria), `pcap` e `@abandonware/noble` (opzionali).
+- DevDependencies: `electron`, `electron-builder`.
+- Build: Windows (NSIS), macOS (DMG), Linux (AppImage).
 
-### Ground Tools (`rid_hub/tools/`)
-| # | File | Status |
-|---|------|--------|
-| G0 | `openapi_spec.yaml` | ✅ |
-| G1 | `scanner_wifi_ble.py` | 🟡 skeleton |
-| G2 | `ble_validation.py` | 🟡 skeleton |
-| G3 | `serial_bridge.py` | 🟡 skeleton |
-| G4 | `timing_analysis.py` | 🟡 skeleton |
-| G5 | `public_key_verify.py` | 🟡 skeleton |
-| G6 | `nvs_provisioning.py` | 🟡 skeleton |
-| G7 | `mesh_mapper.py` | 🟡 skeleton |
-| G8 | `meshtastic_bridge.py` | 🟡 skeleton |
-
-### Ground Tools (`tools/`)
-
-#### `__init__.py` (3 lines)
-- Tools package marker.
-
-#### `scanner_wifi_ble.py` (placeholder)
-- WiFi + BLE RID receiver scanner for ground-side drone detection.
-- Decodes RID transmissions from nearby drones in real time.
-- Requires monitor-mode WiFi adapter + BLE adapter.
-
-#### `mesh_mapper.py` (placeholder)
-- Mesh network map visualizer.
-- Plots detected drone positions and ESP-NOW mesh nodes on a Leaflet/interactive map.
-- Reads session recordings or live WebSocket feed.
-
-#### `meshtastic_bridge.py` (placeholder)
-- Meshtastic LoRa bridge for long-range RID reception.
-- Forwards decoded RID data to a Meshtastic device over serial.
-- Enables km-range drone detection via LoRa mesh.
-
-#### `timing_analysis.py` (placeholder)
-- Packet interval timing analysis tool.
-- Validates ASTM F3411-22a transmission rate compliance from PCAP/session data.
-
-#### `ble_validation.py` (placeholder)
-- Cross-platform BLE receiver test using `bleak`.
-- Scans for RID BLE advertisements (0xFFFA service UUID) on macOS/Windows.
-
-#### `serial_bridge.py` (placeholder)
-- macOS serial bridge — socat wrapper for Docker ESP-IDF development.
-- Bridges USB serial to TCP for container access.
-
-#### `nvs_provisioning.py` (placeholder)
-- NVS private key provisioning script.
-- Flashes Ed25519 private keys + public keys to the NVS partition over serial.
-
-#### `public_key_verify.py` (placeholder)
-- ECDSA P-256 signature verification tool.
-- Verifies signatures generated by the Web API lock system.
-
-#### `openapi_spec.yaml` (85 lines)
-- OpenAPI 3.0 specification for the ESP Remote ID Web API.
-- Documents `/api/config`, `/api/status`, `/api/command`, `/api/logs`, `/update`, `/factory_reset`, `/rollback`.
-
-### Analyzer Web UI (`web/`)
-
-#### `index.html` (~140 lines)
-- **v2:** 5 tabs: Devices (default), Map, Timeline, Statistics, About.
-- **v2:** Toolbar with search/filter/export/replay controls.
-- **v2:** Recording controls — Record/Stop buttons with pulsing REC badge.
-- **v2:** Detail panel overlay — slides in from right on device click.
-- **v2:** Replay file selector — dropdown to load previous sessions.
-- **v2:** UA type distribution grid — metric cards in Statistics tab.
-- Leaflet map, device table, packet log.
-- **OK.**
-
-#### `app.js` (~850 lines)
-- WebSocket client, device table rendering, Leaflet map markers.
-- **v2:** Drone trail polylines on map — 500-point path per device.
-- **v2:** Detail panel — click device shows full detail, RSSI history, message timeline.
-- **v2:** Session recording — Record/Stop/Replay UI logic.
-- **v2:** CSV/KML download — fetch blob from server, trigger save.
-- **v2:** UA-type search filter, RSSI quality filter (good/warn/bad), active-only toggle.
-- **v2:** Desktop notifications — alerts for new devices when tab hidden.
-- **v2:** Drone count over time — scrolling line chart.
-- **v2:** Statistics tab — UA type distribution + top RSSI leaderboard.
-- Dark mode toggle, stats (devices, IDs, packets/min).
-- **OK.**
-
-#### `style.css` (~320 lines)
-- **v2:** Detail panel — fixed right-side slide-in panel with scroll.
-- **v2:** Toolbar layout — horizontal button bar with search/filter controls.
-- **v2:** Stat grid + metric cards — responsive grid for Statistics tab.
-- **v2:** Responsive breakpoints — adapts to small windows.
-- Dark/light theme, badge/tab/table styles.
-- **OK.**
+### Ground Tools Status
+I tool Python (`scanner_wifi_ble.py`, `mesh_mapper.py`, ecc.) erano placeholder.
+La nuova architettura Electron integra capture WiFi/BLE/Serial nativamente nel tab Capture.
+Per strumenti avanzati (timing analysis, provisioning NVS, bridge Meshtastic) — da implementare come moduli Node.js separati in `src/tools/`.
 
 ---
 
@@ -781,13 +668,31 @@ RID_Hub/
 
 ---
 
-### 🖥️ GROUND TOOLS — Python Analyzer (`ESP_DRONE_REMOTEID_Analyzer/`)
-*Tutti gli strumenti di terra, scanner, bridge, visualizzazione.*
+### 🖥️ GROUND TOOLS — RID Hub Electron
+*Tutti gli strumenti di terra integrati nell'app Electron.*
 
-#### Already Structured (skeleton files in `tools/`)
-| # | File | Descrizione | Stato |
-|---|------|-------------|-------|
-| G0 | `tools/openapi_spec.yaml` | Specifica OpenAPI 3.0 delle API REST | ✅ DONE |
+#### Capture Sources (integrate in `src/capture.js`)
+| Source | Modulo npm | Stato |
+|--------|-----------|-------|
+| WiFi 802.11 beacon | `pcap` (opt) | ✅ Portato da Python |
+| BLE RID scan | `@abandonware/noble` (opt) | ✅ Portato da Python |
+| Serial/USB ESP32 | `serialport` | ✅ Portato da Python |
+| PCAP import | dialog + decoder.js | ✅ |
+
+#### Core Modules (in `src/`)
+| Modulo | Descrizione | Stato |
+|--------|-------------|-------|
+| `decoder.js` | ASTM F3411-22a decoder (port da Python) | ✅ |
+| `tracker.js` | RIDDevice tracking, CSV/KML, recording | ✅ |
+| `capture.js` | WiFi/BLE/Serial capture wrapper | ✅ |
+
+#### Tools da implementare (futuro, in `src/tools/`)
+| Tool | Descrizione |
+|------|-------------|
+| Timing Analysis | Validazione intervalli ASTM F3411 da sessioni |
+| NVS Provisioning | Flash chiave Ed25519 su ESP32 via seriale |
+| Meshtastic Bridge | Forward RID verso rete LoRa Meshtastic |
+| Mesh Mapper | Visualizzazione nodi ESP-NOW su mappa |
 
 #### Immediate Next (weeks 1-2)
 | # | Item | File | Effort |
@@ -821,7 +726,7 @@ RID_Hub/
 ### Port Sources
 > `peinser/esp-remoteid` (https://github.com/peinser/esp-remoteid) — fork avanzato con Ed25519 auth, OTA server, DroneCAN, MAVLink ARM_STATUS/MESSAGE_PACK/USB/op-loop/Self-ID-Auth-relay/readiness gate, flash encryption, WS2812, GPIO lighting, BLE TX Kconfig, startup delay, OpenAPI, devcontainer. **Quasi tutto portato** — mancano solo flash encryption, startup delay Kconfig, devcontainer.
 
-> `colonelpanichacks/Sky-Spy` (https://github.com/colonelpanichacks/Sky-Spy) — Rilevatore RID WiFi promiscuo + BLE scanning, allarmi audio, output JSON, dual-core pinning, mesh-mapper.py. Complemento lato ricevitore. **Funzionalità ground spostate in Analyzer tools/.**
+> `colonelpanichacks/Sky-Spy` (https://github.com/colonelpanichacks/Sky-Spy) — Rilevatore RID WiFi promiscuo + BLE scanning, allarmi audio, output JSON, dual-core pinning, mesh-mapper.py. Complemento lato ricevitore. **Funzionalità ground integrate in RID Hub Electron.**
 
 > `JimZGChow/wifi-rid-to-mesh` (https://github.com/JimZGChow/wifi-rid-to-mesh) — Scanner RID → bridge LoRa Meshtastic via seriale. Supporto formato RID francese.
 
@@ -955,7 +860,7 @@ RID_Hub/
 | 🔴 HIGH | `docs/manifest.json` missing targets | `docs/manifest.json` | ✅ All 3 targets present |
 | 🟡 MEDIUM | Lock level command signature | `web_config.c` + `config.html` | ✅ ECDSA P-256 via mbedTLS PK |
 | 🟡 MEDIUM | BLE 5.0 LR Coded PHY = Beta | `ble_tx.c` | 🟡 Needs testing on S3/C6 |
-| 🟡 MEDIUM | Analyzer requires monitor mode + root | `capture.py` | 🟡 Hardware limitation |
+| 🟡 MEDIUM | Capture requires Npcap monitor mode or HW | `src/capture.js` | 🟡 Hardware limitation |
 | 🟢 LOW | `c_cpp_properties.json` hardcoded path | `.vscode/c_cpp_properties.json` | ✅ Gitignored, local only — fixed locally |
 | 🟢 LOW | `launch.json` no debug profiles | `.vscode/launch.json` | ✅ Gitignored, local only |
 | 🟢 LOW | `config(demo).html` manual sync needed | `docs/config(demo).html` | 🟡 Maintenance burden |
@@ -1066,30 +971,17 @@ RID_Hub/
 | 56 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/rid_mavlink_usb.c` | 42 | ✅ |
 | 57 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/webui/config.html` | ~2234 | ✅ |
 | 58-137 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/mavlink/**/*.h/.xml` | ~80 files | 🔶 many unused |
-| 138 | `RID_Hub/main.js` | ~200 | ✅ (Electron main) |
-| 139 | `RID_Hub/package.json` | ~50 | ✅ |
-| 140 | `RID_Hub/preload.js` | ~15 | ✅ |
-| 141 | `RID_Hub/rid_hub/__init__.py` | — | ✅ |
-| 142 | `RID_Hub/rid_hub/__main__.py` | ~22 | ✅ (serve\|gui\|tool dispatch) |
-| 143 | `RID_Hub/rid_hub/capture.py` | ~176 | ✅ |
-| 144 | `RID_Hub/rid_hub/decoder.py` | ~510 | ✅ |
-| 145 | `RID_Hub/rid_hub/server.py` | ~197 | ✅ (WS stub) |
-| 146 | `RID_Hub/rid_hub/rid_cli.py` | ~115 | ✅ |
-| 147 | `RID_Hub/rid_hub/gui.py` | ~109 | ✅ |
-| 148 | `RID_Hub/rid_hub/requirements.txt` | ~18 | ✅ |
-| 149 | `RID_Hub/rid_hub/tools/__init__.py` | 3 | ✅ |
-| 150 | `RID_Hub/rid_hub/tools/scanner_wifi_ble.py` | placeholder | 🟡 skeleton |
-| 151 | `RID_Hub/rid_hub/tools/mesh_mapper.py` | placeholder | 🟡 skeleton |
-| 152 | `RID_Hub/rid_hub/tools/meshtastic_bridge.py` | placeholder | 🟡 skeleton |
-| 153 | `RID_Hub/rid_hub/tools/timing_analysis.py` | placeholder | 🟡 skeleton |
-| 154 | `RID_Hub/rid_hub/tools/ble_validation.py` | placeholder | 🟡 skeleton |
-| 155 | `RID_Hub/rid_hub/tools/serial_bridge.py` | placeholder | 🟡 skeleton |
-| 156 | `RID_Hub/rid_hub/tools/nvs_provisioning.py` | placeholder | 🟡 skeleton |
-| 157 | `RID_Hub/rid_hub/tools/public_key_verify.py` | placeholder | 🟡 skeleton |
-| 158 | `RID_Hub/rid_hub/tools/openapi_spec.yaml` | 85 | ✅ |
-| 159 | `RID_Hub/rid_hub/web/index.html` | ~94 | ✅ (Electron renderer) |
-| 160 | `RID_Hub/rid_hub/web/app.js` | ~438 | ✅ |
-| 161 | `RID_Hub/rid_hub/web/style.css` | ~176 | ✅ |
+| 138 | `RID_Hub/main.js` | ~100 | ✅ (Electron main, IPC nativa) |
+| 139 | `RID_Hub/package.json` | ~35 | ✅ (no Python, Electron-only) |
+| 140 | `RID_Hub/preload.js` | ~40 | ✅ (contextBridge IPC) |
+| 141 | `RID_Hub/src/decoder.js` | ~200 | ✅ (ASTM F3411-22a, port da Python) |
+| 142 | `RID_Hub/src/tracker.js` | ~190 | ✅ (RIDDevice tracking, port da Python) |
+| 143 | `RID_Hub/src/capture.js` | ~140 | ✅ (WiFi/BLE/Serial, Node native) |
+| 144 | `RID_Hub/renderer/index.html` | ~200 | ✅ (UI con Capture tab) |
+| 145 | `RID_Hub/renderer/app.js` | ~500 | ✅ (renderer IPC, chart, map) |
+| 146 | `RID_Hub/renderer/style.css` | ~271 | ✅ (dark/light theme) |
+| 147 | ~~`ESP_DRONE_REMOTEID_Analyzer/`~~ | — | ❌ Deleted (old Python Analyzer) |
+| 148 | ~~`.venv_analyzer/`~~ | — | ❌ Deleted (old Python venv) |
 | 162 | `docs/index.html` | ~901 | ✅ (inline, wiki split) |
 | 163 | `docs/guide.html` | ~1864 | ✅ (inline, technical wiki) |
 | 164 | `docs/config(demo).html` | ~2546 | ✅ |

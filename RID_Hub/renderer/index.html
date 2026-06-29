@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RID Hub — Ground Station</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9/dist/leaflet.css" />
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,14 +13,12 @@
       <h1><span class="gradient">RID Hub</span> <span class="sub">Ground Station</span></h1>
     </div>
     <div class="header-right">
-      <span id="ws-status" class="badge badge-off">Disconnected</span>
+      <span id="cap-source" class="badge badge-off">No Capture</span>
       <span id="stats-devices" class="badge">0 devices</span>
       <span id="stats-ids" class="badge">0 IDs</span>
       <span id="stats-packets" class="badge">0 pkt</span>
       <span id="stats-recording" class="badge badge-rec" style="display:none">● REC</span>
       <button id="btn-record" class="btn">⏺ Record</button>
-      <button id="btn-replay" class="btn">▶ Replay</button>
-      <input type="file" id="replay-file" accept=".json" style="display:none">
       <button class="btn" onclick="resetStats()">Reset</button>
       <button id="notif-toggle" class="btn" title="Toggle desktop notifications">🔕 Off</button>
       <button id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">&#x263e;</button>
@@ -33,6 +30,7 @@
     <button class="tab" data-tab="map">Map</button>
     <button class="tab" data-tab="timeline">Timeline</button>
     <button class="tab" data-tab="stats">Statistics</button>
+    <button class="tab" data-tab="capture">Capture</button>
     <button class="tab" data-tab="about">About</button>
   </div>
 
@@ -53,9 +51,7 @@
         </select>
       </div>
       <div class="toolbar-group">
-        <label>
-          <input type="checkbox" id="filter-active"> Active only
-        </label>
+        <label><input type="checkbox" id="filter-active"> Active only</label>
       </div>
       <div class="toolbar-group toolbar-right">
         <label>Export:</label>
@@ -64,21 +60,12 @@
         <button id="export-session" class="btn btn-sm">Session</button>
       </div>
     </div>
-
     <div class="table-wrap">
       <table id="device-table">
         <thead>
           <tr>
-            <th>MAC</th>
-            <th>Basic ID</th>
-            <th>UA Type</th>
-            <th>Operator</th>
-            <th>Latitude</th>
-            <th>Longitude</th>
-            <th>RSSI</th>
-            <th>Packets</th>
-            <th>Self ID</th>
-            <th>Last Seen</th>
+            <th>MAC</th><th>Basic ID</th><th>UA Type</th><th>Operator</th>
+            <th>Latitude</th><th>Longitude</th><th>RSSI</th><th>Packets</th><th>Self ID</th><th>Last Seen</th>
           </tr>
         </thead>
         <tbody id="device-tbody">
@@ -158,12 +145,50 @@
           <div class="metric-label">Session Duration</div>
         </div>
       </div>
-
       <h2>UA Type Distribution</h2>
       <div class="ua-type-grid" id="ua-type-dist"></div>
-
       <h2>Top RSSI Devices</h2>
       <div id="top-rssi-list"></div>
+    </div>
+  </div>
+
+  <!-- CAPTURE TAB -->
+  <div class="tab-content" id="tab-capture">
+    <div class="capture-panel">
+      <h2>Capture Sources</h2>
+      <div class="capture-grid">
+        <div class="capture-card" id="card-wifi">
+          <h3>WiFi</h3>
+          <p class="cap-desc">802.11 beacon frame capture (requires Npcap)</p>
+          <button id="btn-wifi-start" class="btn btn-cap">▶ Start</button>
+          <button id="btn-wifi-stop" class="btn btn-cap btn-danger" style="display:none">■ Stop</button>
+          <span id="wifi-status" class="badge badge-off">Not connected</span>
+        </div>
+        <div class="capture-card" id="card-ble">
+          <h3>BLE</h3>
+          <p class="cap-desc">Bluetooth Low Energy RID scan</p>
+          <button id="btn-ble-start" class="btn btn-cap">▶ Start</button>
+          <button id="btn-ble-stop" class="btn btn-cap btn-danger" style="display:none">■ Stop</button>
+          <span id="ble-status" class="badge badge-off">Not connected</span>
+        </div>
+        <div class="capture-card" id="card-serial">
+          <h3>Serial / USB</h3>
+          <p class="cap-desc">Connect to ESP32 over USB serial</p>
+          <div class="serial-config">
+            <select id="serial-port-select" class="toolbar-select"><option value="">Select port...</option></select>
+            <input type="number" id="serial-baud" value="115200" class="toolbar-input" style="width:80px" placeholder="baud">
+          </div>
+          <button id="btn-serial-connect" class="btn btn-cap">Connect</button>
+          <button id="btn-serial-disconnect" class="btn btn-cap btn-danger" style="display:none">Disconnect</button>
+          <span id="serial-status" class="badge badge-off">Not connected</span>
+        </div>
+        <div class="capture-card" id="card-pcap">
+          <h3>PCAP Import</h3>
+          <p class="cap-desc">Analyze offline capture files</p>
+          <button id="btn-import-pcap" class="btn btn-cap">📂 Import PCAP</button>
+          <span id="pcap-status" class="badge"></span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -173,14 +198,12 @@
       <h2>RID Hub — Ground Station</h2>
       <p>Real-time Open Drone ID (ASTM F3411-22a) ground receiver and analyzer.</p>
       <ul>
-        <li><strong>Capture</strong>: Scapy-based, single or multi-channel WiFi scan</li>
+        <li><strong>Capture</strong>: WiFi, BLE, serial / USB from ESP32</li>
         <li><strong>Decode</strong>: Full ASTM F3411-22a decoder (Basic ID, Location, System, Operator, Self ID, Auth, Pack)</li>
-        <li><strong>UI</strong>: Chart.js + Leaflet + WebSocket real-time dashboard</li>
-        <li><strong>Tracker</strong>: Per-drone GPS trail history on map</li>
+        <li><strong>UI</strong>: Real-time dashboard with map, charts, device tracking</li>
         <li><strong>Export</strong>: CSV, KML, session JSON replay</li>
         <li><strong>Recording</strong>: In-memory session capture with replay</li>
-        <li><strong>Compatibility</strong>: Windows, macOS, Linux</li>
-        <li><strong>Electron</strong>: Cross-platform desktop app</li>
+        <li><strong>Electron</strong>: Cross-platform desktop app, no Python required</li>
       </ul>
       <p>Part of <a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID">ESP DRONE REMOTEID</a> project.</p>
     </div>
