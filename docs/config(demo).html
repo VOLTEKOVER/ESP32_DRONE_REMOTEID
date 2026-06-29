@@ -1160,12 +1160,15 @@ function generateDemoStatus(){
   demoClock += 2;
   demoAngle += 0.04;
 
-  var radius=0.002;
-  droneLat = demoCenterLat + Math.sin(demoAngle)*radius;
-  droneLon = demoCenterLon + Math.cos(demoAngle)*radius + Math.sin(demoAngle*3)*0.0003;
-  droneAlt = 80 + Math.sin(demoAngle*2)*15;
-  droneSpeed = 2.5 + Math.sin(demoAngle*0.5)*1.2;
-  droneHeading = ((demoAngle*180/Math.PI) % 360);
+  var demoOn = mockConfig.options & 8;
+  if (demoOn) {
+    var radius=0.002;
+    droneLat = demoCenterLat + Math.sin(demoAngle)*radius;
+    droneLon = demoCenterLon + Math.cos(demoAngle)*radius + Math.sin(demoAngle*3)*0.0003;
+    droneAlt = 80 + Math.sin(demoAngle*2)*15;
+    droneSpeed = 2.5 + Math.sin(demoAngle*0.5)*1.2;
+    droneHeading = ((demoAngle*180/Math.PI) % 360);
+  }
 
   batteryVoltage = Math.max(10.8, batteryVoltage - 0.0002);
 
@@ -1194,13 +1197,15 @@ function generateDemoStatus(){
     board:'ESP32-WROOM-32',
     cpu:'ESP32-WROOM-32',
     uptime:demoClock,
-    gps_valid:true,
-    dop:0.8+Math.random()*0.4,
-    lat:droneLat, lon:droneLon, alt:droneAlt,
-    speed:parseFloat(droneSpeed.toFixed(2)),
-    heading:parseFloat(droneHeading.toFixed(1)),
-    satellites:10+Math.floor(Math.random()*6),
-    fix_type:3,
+    gps_valid:demoOn,
+    dop:demoOn ? 0.8+Math.random()*0.4 : 99.9,
+    lat:demoOn ? droneLat : 0,
+    lon:demoOn ? droneLon : 0,
+    alt:demoOn ? droneAlt : 0,
+    speed:demoOn ? parseFloat(droneSpeed.toFixed(2)) : 0,
+    heading:demoOn ? parseFloat(droneHeading.toFixed(1)) : 0,
+    satellites:demoOn ? 10+Math.floor(Math.random()*6) : 0,
+    fix_type:demoOn ? 3 : 0,
     operator_lat:demoCenterLat, operator_lon:demoCenterLon, operator_alt:50,
     tx_wifi_bcn:txCounters.wifi_bcn,
     tx_wifi_nan:txCounters.wifi_nan,
@@ -1224,7 +1229,7 @@ function generateDemoStatus(){
 
 /* Generate periodic log entries */
 var logIndex=0;
-var logTemplates=[
+var logTemplatesOn=[
   '[RID] Beacon transmitted on WiFi CH6',
   '[RID] BLE 4.0 advertisement sent',
   '[RID] BLE 5.0 long-range packet sent',
@@ -1238,15 +1243,31 @@ var logTemplates=[
   '[SYS] CPU load: %d%% | temp: %.1f\u00b0C',
   '[DEMO] Patrol waypoint reached, heading %.0f\u00b0'
 ];
+var logTemplatesOff=[
+  '[RID] Beacon transmitted on WiFi CH6',
+  '[RID] BLE 4.0 advertisement sent',
+  '[RID] BLE 5.0 long-range packet sent',
+  '[FC] No MAVLink heartbeat (waiting)',
+  '[FC] MSP protocol timeout',
+  '[FC] NMEA no sentence detected',
+  '[STAT] Tx total: %d packets | rate: %d/s',
+  '[STAT] Heap: free %d / %d bytes',
+  '[WIFI] Beacon interval: 1000ms',
+  '[BLE] BLE 4.0 stack: idle',
+  '[SYS] CPU load: %d%% | temp: %.1f\u00b0C',
+  '[GPS] No fix — waiting for satellites'
+];
 
 function getNextDemoLogs(){
   var now = demoClock;
   if(now - lastDemoLog < 4) return [];
   lastDemoLog = now;
+  var demoOn = mockConfig.options & 8;
+  var templates = demoOn ? logTemplatesOn : logTemplatesOff;
   var count = 1 + Math.floor(Math.random()*2);
   var entries = [];
   for(var i=0;i<count;i++){
-    var tpl = logTemplates[logIndex % logTemplates.length];
+    var tpl = templates[logIndex % templates.length];
     logIndex++;
     var msg = tpl
       .replace('%d', 10+Math.floor(Math.random()*200))
@@ -1264,16 +1285,20 @@ function getNextDemoLogs(){
   return entries;
 }
 
-/* Generate initial log batch */
-var mockLogs = [
-  {l:'I',t:100,m:'[BOOT] Firmware v1.2.0-demo (ESP32)'},
-  {l:'I',t:500,m:'[WIFI] AP mode started (SSID: RID-DEMO)'},
-  {l:'I',t:900,m:'[BLE] BLE 4.0 + BLE 5.0 initialized'},
-  {l:'I',t:1300,m:'[GPS] GPS 3D fix acquired (14 sats)'},
-  {l:'I',t:1700,m:'[FC] MAVLink detected at 57600 baud'},
-  {l:'I',t:2100,m:'[RID] Remote ID transmissions active (demo)'},
-  {l:'I',t:2500,m:'[DEMO] Simulated flight patrol started'}
-];
+/* Generate initial log batch based on demo flag */
+function buildBootLogs(){
+  var demoOn = mockConfig.options & 8;
+  return [
+    {l:'I',t:100,m:'[BOOT] Firmware v1.2.0-demo (ESP32)'},
+    {l:'I',t:500,m:'[WIFI] AP mode started (SSID: RID-DEMO)'},
+    {l:'I',t:900,m:'[BLE] BLE 4.0 + BLE 5.0 initialized'},
+    {l:'I',t:1300,m:demoOn?'[GPS] GPS 3D fix acquired (14 sats)':'[GPS] No fix — waiting for satellites'},
+    {l:'I',t:1700,m:demoOn?'[FC] MAVLink detected at 57600 baud':'[FC] No flight controller detected'},
+    {l:'I',t:2100,m:'[RID] Remote ID transmissions active'},
+    {l:'I',t:2500,m:demoOn?'[DEMO] Simulated flight patrol started':'[SYS] Demo mode off — FC required for GPS data'}
+  ];
+}
+var mockLogs = buildBootLogs();
 
 /* ---------- FETCH INTERCEPTOR ---------- */
 var _origFetch = window.fetch;
@@ -1284,7 +1309,7 @@ window.fetch = function(url, opts){
       return Promise.resolve(new Response(JSON.stringify(mockConfig),{status:200,headers:{'Content-Type':'application/json'}}));
     }
     if(u==='/api/config' && opts && opts.method==='POST'){
-      try{var c=JSON.parse(opts.body);Object.assign(mockConfig,c);showMsg('Configuration saved (demo)');return Promise.resolve(new Response('{"status":"ok"}',{status:200}))}catch(e){return Promise.resolve(new Response('{"status":"error"}',{status:400}))}
+      try{var c=JSON.parse(opts.body);var prevDemo=mockConfig.options&8;Object.assign(mockConfig,c);var newDemo=mockConfig.options&8;if(prevDemo!==newDemo){mockLogs=buildBootLogs()};showMsg('Configuration saved (demo)');return Promise.resolve(new Response('{"status":"ok"}',{status:200}))}catch(e){return Promise.resolve(new Response('{"status":"error"}',{status:400}))}
     }
     if(u==='/api/status'){
       var status = generateDemoStatus();
