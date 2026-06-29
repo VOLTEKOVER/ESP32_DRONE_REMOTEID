@@ -81,6 +81,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);-webkit
 .sidebar-status{display:flex;align-items:center;gap:6px;padding:6px 12px;margin:0 6px 4px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border)}
 .sidebar-collapse-btn{display:flex;align-items:center;justify-content:center;padding:8px;margin:0 6px 6px;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;font-family:var(--font)}
 .sidebar-collapse-btn:hover{background:var(--surface-hover);color:var(--text)}
+.sidebar-settings{border-top:1px solid var(--border);margin:0 6px;padding:2px 0}
 
 /* ====== Sidebar Update Box ====== */
 .sidebar-update{margin:6px 6px;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
@@ -221,6 +222,7 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);-webkit
 /* ====== Spacing helpers ====== */
 .space-y-1>*+*{margin-top:4px}
 .space-y-2>*+*{margin-top:8px}
+.max-h-32{max-height:128px}
 
 /* ====== Activity Chart ====== */
 .activity-chart-svg{width:100%;height:80px;display:block;border-radius:var(--radius-sm)}
@@ -233,3 +235,26 @@ body{font-family:var(--font);background:var(--surface);color:var(--text);-webkit
 .statusbar-left,.statusbar-right{display:flex;align-items:center;gap:14px}
 .statusbar-item{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);font-family:'Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace}
 .statusbar-item .ti{font-size:12px}
+
+/* ====== Firmware Tab ====== */
+.firmware-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-alt);min-width:0}
+.firmware-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px}
+
+/* ====== Page tabs (iframe for Landing/Guide/Configure) ====== */
+.page-tab{display:flex;flex-direction:column;min-height:calc(100vh - 140px)}
+.page-frame-wrap{flex:1;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:#fff;position:relative}
+.page-frame{position:absolute;inset:0;width:100%;height:100%;border:none}
+
+/* ====== Ground sub-navigation ====== */
+.ground-nav{display:flex;gap:2px;margin-bottom:16px;padding:4px;background:var(--surface-alt);border:1px solid var(--border);border-radius:var(--radius-sm);overflow-x:auto}
+.ground-nav-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);cursor:pointer;font-size:11px;font-weight:600;font-family:var(--font);transition:all .15s;white-space:nowrap}
+.ground-nav-btn:hover{background:var(--surface-hover);color:var(--text)}
+.ground-nav-active{background:var(--surface)!important;color:var(--text)!important;box-shadow:var(--shadow-sm)}
+
+/* ====== Compat badges ====== */
+.compat-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px 4px 6px;border-radius:20px;font-size:.75em;font-weight:600;border:1px solid}
+
+/* ====== Settings modal ====== */
+.settings-modal{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center}
+.settings-modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+.settings-modal-content{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;max-width:380px;width:90vw;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg)}

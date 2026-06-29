@@ -101,6 +101,51 @@
         <button @click="checkUpdate()" class="su-btn">Riprova</button>
       </div>
     </div>
+    <!-- ====== SETTINGS BUTTON ====== -->
+    <div class="sidebar-settings" x-show="!isSidebarCollapsed">
+      <div class="flex items-center gap-2" style="padding:4px 12px">
+        <span class="text-xs" style="color:var(--text-muted);flex:1" x-text="'v'+appVersion"></span>
+        <button @click="showSettingsModal=!showSettingsModal" class="tb-cmd-btn" style="padding:2px 6px;height:24px" title="Impostazioni">
+          <i class="ti ti-settings" style="font-size:12px"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Settings modal -->
+    <div x-show="showSettingsModal" x-cloak class="settings-modal">
+      <div class="settings-modal-bg" @click="showSettingsModal=false"></div>
+      <div class="settings-modal-content">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-semibold" style="color:var(--text)">Impostazioni</span>
+          <button @click="showSettingsModal=false" class="tb-btn" style="width:28px;height:28px"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="card-base p-4 flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <i class="ti" :class="theme==='dark'?'ti-moon':'ti-sun'" style="font-size:18px" :style="{color:theme==='dark'?'var(--accent)':'var(--accent-orange)'}"></i>
+            <div><div class="text-sm font-medium" style="color:var(--text)">Tema</div><div class="text-xs" style="color:var(--text-muted)" x-text="theme==='dark'?'Scuro':'Chiaro'"></div></div>
+          </div>
+          <button @click="toggleTheme()" class="btn-outline text-xs" x-text="theme==='dark'?'Chiaro':'Scuro'"></button>
+        </div>
+        <div class="card-base p-4 flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <i class="ti ti-refresh" style="color:var(--accent-red);font-size:18px"></i>
+            <div><div class="text-sm font-medium" style="color:var(--text)">Factory Reset</div><div class="text-xs" style="color:var(--text-muted)">Azzera tutti i dati e ripristina</div></div>
+          </div>
+          <button @click="factoryReset();showSettingsModal=false" class="btn-danger text-xs">Reset</button>
+        </div>
+        <div class="card-base p-4">
+          <div class="text-xs space-y-1" style="color:var(--text-muted)">
+            <p>RID Hub <span x-text="'v'+appVersion"></span></p>
+            <p>Open DroneID Ground Station — ASTM F3411-22a</p>
+            <p><a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" target="_blank" style="color:var(--accent);text-decoration:none">GitHub ↗</a></p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-3" style="justify-content:center">
+          <span class="compat-badge" style="background:#fdecea;color:#c62828;border-color:#f5c6c6">MAVLink</span>
+          <span class="compat-badge" style="background:#e8f5e9;color:#1b7a2e;border-color:#c8e0c9">MSP</span>
+          <span class="compat-badge" style="background:#e3f2fd;color:#0d47a1;border-color:#bed9f0">NMEA</span>
+        </div>
+      </div>
+    </div>
     <div class="sidebar-status" x-show="!isSidebarCollapsed && devices.length>0">
       <span class="status-dot" style="background:var(--accent-green)"></span>
       <span class="text-xs" style="color:var(--text-muted)" x-text="devices.length+' active'"></span>
@@ -113,217 +158,312 @@
   <!-- ====== MAIN CONTENT ====== -->
   <main class="main-content">
 
-    <!-- ====== DASHBOARD ====== -->
-    <section x-show="activeTab==='dashboard'" x-cloak>
-      <div class="page-header"><h1>Dashboard</h1><p class="text-muted">Riepilogo stazione di terra</p></div>
-      <div class="grid-4">
-        <div class="stat-card">
-          <div class="stat-head"><i class="ti ti-radio" style="color:var(--accent);font-size:14px"></i><span class="stat-label">Droni</span></div>
-          <div class="stat-value" x-text="devices.length"></div>
-          <div class="stat-sub" x-text="activeDrones+' attivi ora'"></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-head"><i class="ti ti-signal-5g" style="color:var(--accent-green);font-size:14px"></i><span class="stat-label">RSSI</span></div>
-          <div class="stat-value"><span x-text="avgRssi"></span><span class="stat-unit"> dBm</span></div>
-          <div class="stat-sub" x-show="devices.length>0" x-text="'Best: '+bestRssi+' dBm'"></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-head"><i class="ti ti-activity" style="color:var(--accent-orange);font-size:14px"></i><span class="stat-label">Pacchetti</span></div>
-          <div class="stat-value" x-text="totalPackets.toLocaleString()"></div>
-          <div class="stat-sub" x-text="sessionPackets+' in sessione'"></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-head"><i class="ti ti-clock" style="color:var(--accent-purple);font-size:14px"></i><span class="stat-label">Sessione</span></div>
-          <div class="flex gap-2 mt-1">
-            <button @click="toggleRecording()" class="btn-primary text-xs flex items-center gap-1"><i class="ti" :class="isRecording?'ti-player-stop':'ti-player-record-filled'" style="font-size:12px"></i><span x-text="isRecording?'Stop':'Record'"></span></button>
-            <button @click="resetSession()" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i></button>
+    <!-- ====== GROUND ====== -->
+    <section x-show="activeTab==='ground'" x-cloak>
+      <!-- Ground sub-nav -->
+      <div class="ground-nav">
+        <template x-for="sub in groundSubs" :key="sub.id">
+          <button @click="groundTab=sub.id" class="ground-nav-btn" :class="groundTab===sub.id?'ground-nav-active':''">
+            <i class="ti" :class="sub.icon" style="font-size:13px"></i>
+            <span x-text="sub.label"></span>
+          </button>
+        </template>
+      </div>
+
+      <!-- Sub: Dashboard -->
+      <div x-show="groundTab==='dashboard'">
+        <div class="page-header"><h1>Dashboard</h1><p class="text-muted">Riepilogo stazione di terra</p></div>
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="stat-head"><i class="ti ti-radio" style="color:var(--accent);font-size:14px"></i><span class="stat-label">Droni</span></div>
+            <div class="stat-value" x-text="devices.length"></div>
+            <div class="stat-sub" x-text="activeDrones+' attivi ora'"></div>
           </div>
-          <div x-show="isRecording" class="flex items-center gap-1 mt-2 text-xs font-mono" style="color:var(--accent-red)"><span class="rec-dot" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> REC <span x-text="sessionPackets"></span> pkt</div>
+          <div class="stat-card">
+            <div class="stat-head"><i class="ti ti-signal-5g" style="color:var(--accent-green);font-size:14px"></i><span class="stat-label">RSSI</span></div>
+            <div class="stat-value"><span x-text="avgRssi"></span><span class="stat-unit"> dBm</span></div>
+            <div class="stat-sub" x-show="devices.length>0" x-text="'Best: '+bestRssi+' dBm'"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-head"><i class="ti ti-activity" style="color:var(--accent-orange);font-size:14px"></i><span class="stat-label">Pacchetti</span></div>
+            <div class="stat-value" x-text="totalPackets.toLocaleString()"></div>
+            <div class="stat-sub" x-text="sessionPackets+' in sessione'"></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-head"><i class="ti ti-clock" style="color:var(--accent-purple);font-size:14px"></i><span class="stat-label">Sessione</span></div>
+            <div class="flex gap-2 mt-1">
+              <button @click="toggleRecording()" class="btn-primary text-xs flex items-center gap-1"><i class="ti" :class="isRecording?'ti-player-stop':'ti-player-record-filled'" style="font-size:12px"></i><span x-text="isRecording?'Stop':'Record'"></span></button>
+              <button @click="resetSession()" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i></button>
+            </div>
+            <div x-show="isRecording" class="flex items-center gap-1 mt-2 text-xs font-mono" style="color:var(--accent-red)"><span class="rec-dot" style="width:6px;height:6px;border-radius:50%;display:inline-block"></span> REC <span x-text="sessionPackets"></span> pkt</div>
+          </div>
+        </div>
+        <div class="card-base p-3 mt-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-xs font-semibold" style="color:var(--text)">Attività pacchetti (30s)</div>
+            <span class="text-xs font-mono" style="color:var(--text-muted)"><span x-text="packetRate.toFixed(1)"></span> pkts/s</span>
+          </div>
+          <svg x-show="totalPackets>0" viewBox="0 0 600 80" class="activity-chart-svg" preserveAspectRatio="none" x-html="activityChartSvg"></svg>
+          <div x-show="totalPackets===0" class="text-xs" style="color:var(--text-muted);height:80px;display:flex;align-items:center;justify-content:center">In attesa di dati...</div>
+        </div>
+        <div class="card-base p-3 mt-3">
+          <div class="text-xs font-semibold mb-2" style="color:var(--text)">Esporta</div>
+          <div class="flex gap-2">
+            <button @click="exportData('CSV')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> CSV</button>
+            <button @click="exportData('KML')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> KML</button>
+            <button @click="exportData('JSON')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> JSON</button>
+          </div>
+        </div>
+        <div x-show="devices.length===0" class="card-base p-8 text-center mt-4">
+          <i class="ti ti-radio" style="font-size:32px;color:var(--text-muted)"></i>
+          <p class="text-xs mt-2" style="color:var(--text-muted)">Nessun drone rilevato. Avvia la cattura nella scheda Capture.</p>
         </div>
       </div>
-      <div class="card-base p-3 mt-4">
-        <div class="flex items-center justify-between mb-2">
-          <div class="text-xs font-semibold" style="color:var(--text)">Attività pacchetti (30s)</div>
-          <span class="text-xs font-mono" style="color:var(--text-muted)"><span x-text="packetRate.toFixed(1)"></span> pkts/s</span>
+
+      <!-- Sub: Devices -->
+      <div x-show="groundTab==='devices'">
+        <div class="page-header"><h1>Devices</h1><p class="text-muted" x-text="devices.length+' drone'+(devices.length!==1?'s':'')+' rilevati'"></p></div>
+        <div class="flex items-center gap-2 mb-4">
+          <div class="search-wrap"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-muted);pointer-events:none"></i><input class="input-min" style="padding-left:30px" placeholder="Cerca per MAC o Basic ID..." x-model="deviceSearch"></div>
         </div>
-        <svg x-show="totalPackets>0" viewBox="0 0 600 80" class="activity-chart-svg" preserveAspectRatio="none" x-html="activityChartSvg"></svg>
-        <div x-show="totalPackets===0" class="text-xs" style="color:var(--text-muted);height:80px;display:flex;align-items:center;justify-content:center">In attesa di dati...</div>
-      </div>
-      <div class="card-base p-3 mt-3">
-        <div class="text-xs font-semibold mb-2" style="color:var(--text)">Esporta</div>
-        <div class="flex gap-2">
-          <button @click="exportData('CSV')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> CSV</button>
-          <button @click="exportData('KML')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> KML</button>
-          <button @click="exportData('JSON')" class="btn-outline text-xs"><i class="ti ti-download" style="font-size:12px"></i> JSON</button>
+        <div x-show="filteredDevices.length>0" class="card-base overflow-hidden">
+          <div class="table-wrap">
+            <table class="table-min">
+              <thead><tr>
+                <th @click="toggleSort('mac')" class="sort-th"><span>MAC</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th @click="toggleSort('uaType')" class="sort-th"><span>Type</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th @click="toggleSort('rssiLast')" class="sort-th"><span>RSSI</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th @click="toggleSort('packetsCount')" class="sort-th"><span>Pkts</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th @click="toggleSort('lastSeen')" class="sort-th"><span>Last</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th @click="toggleSort('firstSeen')" class="sort-th"><span>First</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
+                <th>Position</th><th>Basic ID</th><th>Operator</th>
+              </tr></thead>
+              <tbody>
+                <template x-for="d in filteredDevices" :key="d.mac">
+                  <tr @click="selectDevice(d.mac)" class="device-row">
+                    <td class="font-mono text-xs font-semibold" style="color:var(--accent)" x-text="d.mac"></td>
+                    <td><span class="tag" x-text="d.uaType"></span></td>
+                    <td class="font-mono" :style="{color:d.rssiLast>-70?'var(--accent-green)':d.rssiLast>-85?'var(--accent-orange)':'var(--text-muted)'}" x-text="d.rssiLast"></td>
+                    <td class="font-mono" x-text="d.packetsCount"></td>
+                    <td class="text-xs font-mono" style="color:var(--text-muted)" x-text="fmtTime(d.lastSeen)"></td>
+                    <td class="text-xs font-mono" style="color:var(--text-muted)" x-text="fmtTime(d.firstSeen)"></td>
+                    <td class="font-mono text-xs" style="color:var(--text-secondary)" x-text="d.lat.toFixed(2)+', '+d.lon.toFixed(2)"></td>
+                    <td class="font-mono text-xs truncate" style="max-width:100px;color:var(--text-muted)" x-text="d.basicId||'—'"></td>
+                    <td class="font-mono text-xs truncate" style="max-width:100px;color:var(--text-muted)" x-text="d.operatorId||'—'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div x-show="filteredDevices.length===0" class="card-base p-8 text-center">
+          <i class="ti ti-radio" style="font-size:32px;color:var(--text-muted)"></i>
+          <p class="text-xs mt-2" style="color:var(--text-muted)" x-text="deviceSearch?'Nessun drone corrisponde.':'Nessun drone rilevato.'"></p>
         </div>
       </div>
-      <div x-show="devices.length===0" class="card-base p-8 text-center mt-4">
-        <i class="ti ti-radio" style="font-size:32px;color:var(--text-muted)"></i>
-        <p class="text-xs mt-2" style="color:var(--text-muted)">Nessun drone rilevato. Avvia la cattura nella scheda Capture.</p>
+
+      <!-- Sub: Map -->
+      <div x-show="groundTab==='map'">
+        <div class="page-header"><h1>Mappa</h1><p class="text-muted" x-text="validDevices.length+' drone'+(validDevices.length!==1?'s':'')+' posizionati'"></p></div>
+        <div class="map-container card-base">
+          <svg viewBox="-180 -90 360 180" class="map-svg" :style="{background:theme==='dark'?'#0a1628':'#e8f0fe'}">
+            <g x-html="mapGridSvg"></g>
+            <circle cx="0" cy="0" r="1.5" fill="none" stroke="var(--accent)" stroke-width="0.3" opacity="0.3"/>
+            <line x1="-3" y1="0" x2="3" y2="0" stroke="var(--accent)" stroke-width="0.2" opacity="0.2"/>
+            <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--accent)" stroke-width="0.2" opacity="0.2"/>
+            <g x-html="mapMarkersSvg"></g>
+          </svg>
+          <div class="map-legend">
+            <div class="flex items-center gap-2"><span class="dot" style="width:10px;height:10px;background:var(--accent-green)"></span><span class="text-xs" style="color:var(--text-secondary)">RSSI &gt; -70 dBm</span></div>
+            <div class="flex items-center gap-2"><span class="dot" style="width:10px;height:10px;background:var(--accent-orange)"></span><span class="text-xs" style="color:var(--text-secondary)">RSSI &le; -70 dBm</span></div>
+          </div>
+          <div x-show="validDevices.length===0" class="map-empty"><p class="text-xs" style="color:var(--text-muted)">Nessun dato di posizione</p></div>
+        </div>
+      </div>
+
+      <!-- Sub: Timeline -->
+      <div x-show="groundTab==='timeline'">
+        <div class="flex items-center justify-between mb-4">
+          <div class="page-header mb-0"><h1>Timeline</h1><p class="text-muted" x-text="packets.length+' pacchetti'"></p></div>
+          <button @click="clearLog()" class="btn-outline text-xs"><i class="ti ti-trash" style="font-size:12px"></i> Clear</button>
+        </div>
+        <div x-show="packets.length >= 2" class="card-base p-3 mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--text-muted)">RSSI per MAC</span>
+          </div>
+          <svg x-html="timelineChartSvg" class="w-full" style="height:96px"></svg>
+          <div class="flex flex-wrap gap-2 mt-2" x-show="macColorList.length > 0">
+            <template x-for="item in macColorList" :key="item.mac">
+              <span class="mac-legend-item">
+                <span class="mac-legend-swatch" :style="{background:item.color}"></span>
+                <span class="text-xs font-mono" style="color:var(--text-muted)" x-text="item.mac.slice(-8)"></span>
+              </span>
+            </template>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 mb-3 flex-wrap">
+          <input class="input-min" style="width:140px" placeholder="Filtra MAC..." x-model="macFilter">
+          <input class="input-min" style="width:140px" placeholder="Filtra tipo msg..." x-model="msgFilter">
+        </div>
+        <div class="log-console" style="max-height:calc(100vh - 320px);min-height:200px">
+          <template x-for="p in filteredPackets" :key="p._idx">
+            <div class="log-line">
+              <span class="log-time" x-text="fmtTime(p.timestamp)"></span>
+              <span class="log-mac" x-text="p.mac.slice(-8)"></span>
+              <span class="log-rssi" :style="{color:p.rssi>-70?'var(--accent-green)':p.rssi>-85?'var(--accent-orange)':'var(--text-muted)'}" x-text="p.rssi+'dBm'"></span>
+              <span class="log-msg" x-text="p.msgType"></span>
+            </div>
+          </template>
+          <div x-show="filteredPackets.length===0" class="text-xs" style="color:var(--text-muted)">In attesa di pacchetti...</div>
+        </div>
+      </div>
+
+      <!-- Sub: Capture -->
+      <div x-show="groundTab==='capture'">
+        <div class="page-header"><h1>Capture</h1><p class="text-muted">Gestione sorgenti di cattura</p></div>
+        <div class="grid-2">
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><i class="ti ti-wifi" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">WiFi Beacon</span></div>
+              <button @click="toggleWifi()" class="chip-btn" :class="wifiActive?'active':''" x-text="wifiActive?'ATTIVO':'INATTIVO'"></button>
+            </div>
+            <p class="text-xs" style="color:var(--text-secondary)">Cattura pacchetti WiFi beacon (NAV/Beacon) su interfaccia monitor.</p>
+            <p class="text-xs mt-2 font-mono" :style="{color:wifiActive?'var(--accent-green)':'var(--text-muted)'}" x-text="wifiActive?'● In ascolto...':'Fare clic per avviare'"></p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><i class="ti ti-brand-bluetooth" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">Bluetooth LE</span></div>
+              <button @click="toggleBle()" class="chip-btn" :class="bleActive?'active':''" x-text="bleActive?'ATTIVO':'INATTIVO'"></button>
+            </div>
+            <p class="text-xs" style="color:var(--text-secondary)">Scansione BLE per pacchetti Open DroneID.</p>
+            <p class="text-xs mt-2 font-mono" :style="{color:bleActive?'var(--accent-green)':'var(--text-muted)'}" x-text="bleActive?'● In scansione...':'Fare clic per avviare'"></p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><i class="ti ti-cable" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">Seriale</span></div>
+              <button @click="toggleSerial()" class="chip-btn" :class="serialActive?'active':''" x-text="serialActive?'CONNESSO':'DISCONNESSO'"></button>
+            </div>
+            <p class="text-xs" style="color:var(--text-secondary)">Lettura da ricevitore seriale (es. ESP32 via UART).</p>
+            <p class="text-xs mt-2 font-mono" :style="{color:serialActive?'var(--accent-green)':'var(--text-muted)'}" x-text="serialActive?'● Connesso':'Fare clic per connettere'"></p>
+          </div>
+          <div class="stat-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2"><i class="ti ti-file-upload" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">PCAP Import</span></div>
+              <button @click="importPcap()" class="btn-outline text-xs">Importa PCAP</button>
+            </div>
+            <p class="text-xs" style="color:var(--text-secondary)">Carica file PCAP per analisi offline di pacchetti WiFi/BT.</p>
+            <p class="text-xs mt-2" style="color:var(--text-muted)">Supporta formati libpcap e pcapng</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- ====== DEVICES ====== -->
-    <section x-show="activeTab==='devices'" x-cloak>
-      <div class="page-header"><h1>Devices</h1><p class="text-muted" x-text="devices.length+' drone'+(devices.length!==1?'s':'')+' rilevati'"></p></div>
+    <!-- ====== LANDING (docs/index.html via iframe) ====== -->
+    <section x-show="activeTab==='landing'" x-cloak class="page-tab">
+      <div class="flex items-center justify-between mb-3">
+        <div class="page-header mb-0"><h1>Landing Page</h1><p class="text-muted">Sito del progetto — sincronizzato da GitHub</p></div>
+        <div class="flex items-center gap-2">
+          <span x-show="pageCacheStatus.landing==='syncing'" class="text-xs" style="color:var(--accent)"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Sincronizzazione...</span>
+          <button @click="refreshPage('landing')" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i> Aggiorna</button>
+        </div>
+      </div>
+      <div class="page-frame-wrap">
+        <iframe class="page-frame" srcdoc="" id="iframe-landing"></iframe>
+      </div>
+    </section>
+
+    <!-- ====== GUIDE (docs/guide.html via iframe) ====== -->
+    <section x-show="activeTab==='guide'" x-cloak class="page-tab">
+      <div class="flex items-center justify-between mb-3">
+        <div class="page-header mb-0"><h1>Guida tecnica</h1><p class="text-muted">Documentazione — sincronizzata da GitHub</p></div>
+        <div class="flex items-center gap-2">
+          <span x-show="pageCacheStatus.guide==='syncing'" class="text-xs" style="color:var(--accent)"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Sincronizzazione...</span>
+          <button @click="refreshPage('guide')" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i> Aggiorna</button>
+        </div>
+      </div>
+      <div class="page-frame-wrap">
+        <iframe class="page-frame" srcdoc="" id="iframe-guide"></iframe>
+      </div>
+    </section>
+
+    <!-- ====== CONFIGURE (docs/config(demo).html via iframe) ====== -->
+    <section x-show="activeTab==='configure'" x-cloak class="page-tab">
+      <div class="flex items-center justify-between mb-3">
+        <div class="page-header mb-0"><h1>Configura ESP32</h1><p class="text-muted">Configuratore dispositivo — sincronizzato da GitHub</p></div>
+        <div class="flex items-center gap-2">
+          <span x-show="pageCacheStatus.configure==='syncing'" class="text-xs" style="color:var(--accent)"><i class="ti ti-loader" style="animation:spin 1s linear infinite"></i> Sincronizzazione...</span>
+          <button @click="refreshPage('configure')" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i> Aggiorna</button>
+        </div>
+      </div>
+      <div class="page-frame-wrap">
+        <iframe class="page-frame" srcdoc="" id="iframe-configure" allow="serial"></iframe>
+      </div>
+    </section>
+
+    <!-- ====== FIRMWARE ====== -->
+    <section x-show="activeTab==='firmware'" x-cloak>
+      <div class="page-header"><h1>Firmware</h1><p class="text-muted">Scarica e flasha il firmware ESP32</p></div>
       <div class="flex items-center gap-2 mb-4">
-        <div class="search-wrap"><i class="ti ti-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--text-muted);pointer-events:none"></i><input class="input-min" style="padding-left:30px" placeholder="Cerca per MAC o Basic ID..." x-model="deviceSearch"></div>
+        <button @click="loadFirmwareReleases()" class="btn-outline text-xs"><i class="ti ti-refresh" style="font-size:12px"></i> Controlla release</button>
+        <span class="text-xs" style="color:var(--text-muted)" x-text="firmwareStatus==='checking'?'Verifica in corso...':''"></span>
       </div>
-      <div x-show="filteredDevices.length>0" class="card-base overflow-hidden">
-        <div class="table-wrap">
-          <table class="table-min">
-            <thead><tr>
-              <th @click="toggleSort('mac')" class="sort-th"><span>MAC</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th @click="toggleSort('uaType')" class="sort-th"><span>Type</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th @click="toggleSort('rssiLast')" class="sort-th"><span>RSSI</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th @click="toggleSort('packetsCount')" class="sort-th"><span>Pkts</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th @click="toggleSort('lastSeen')" class="sort-th"><span>Last</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th @click="toggleSort('firstSeen')" class="sort-th"><span>First</span><i class="ti ti-arrows-sort" style="font-size:11px"></i></th>
-              <th>Position</th><th>Basic ID</th><th>Operator</th>
-            </tr></thead>
-            <tbody>
-              <template x-for="d in filteredDevices" :key="d.mac">
-                <tr @click="selectDevice(d.mac)" class="device-row">
-                  <td class="font-mono text-xs font-semibold" style="color:var(--accent)" x-text="d.mac"></td>
-                  <td><span class="tag" x-text="d.uaType"></span></td>
-                  <td class="font-mono" :style="{color:d.rssiLast>-70?'var(--accent-green)':d.rssiLast>-85?'var(--accent-orange)':'var(--text-muted)'}" x-text="d.rssiLast"></td>
-                  <td class="font-mono" x-text="d.packetsCount"></td>
-                  <td class="text-xs font-mono" style="color:var(--text-muted)" x-text="fmtTime(d.lastSeen)"></td>
-                  <td class="text-xs font-mono" style="color:var(--text-muted)" x-text="fmtTime(d.firstSeen)"></td>
-                  <td class="font-mono text-xs" style="color:var(--text-secondary)" x-text="d.lat.toFixed(2)+', '+d.lon.toFixed(2)"></td>
-                  <td class="font-mono text-xs truncate" style="max-width:100px;color:var(--text-muted)" x-text="d.basicId||'—'"></td>
-                  <td class="font-mono text-xs truncate" style="max-width:100px;color:var(--text-muted)" x-text="d.operatorId||'—'"></td>
-                </tr>
+      <div x-show="firmwareReleases.length>0" class="space-y-3">
+        <template x-for="rel in firmwareReleases" :key="rel.tag">
+          <div class="card-base p-3">
+            <div class="flex items-center justify-between mb-2">
+              <div>
+                <span class="text-sm font-semibold" style="color:var(--text)" x-text="rel.name||rel.tag"></span>
+                <span x-show="rel.prerelease" class="tag" style="background:var(--accent-orange);color:#fff;margin-left:6px">Pre-release</span>
+              </div>
+              <span class="text-xs font-mono" style="color:var(--text-muted)" x-text="rel.published.slice(0,10)"></span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="asset in rel.assets" :key="asset.name">
+                <div class="firmware-item">
+                  <i :class="firmwareAssetIcon(asset.name)" class="ti" style="font-size:14px;color:var(--accent)"></i>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-mono truncate" style="color:var(--text)" x-text="asset.name"></div>
+                    <div class="text-xs" style="color:var(--text-muted)" x-text="(asset.size/1024).toFixed(0)+' KB'"></div>
+                  </div>
+                  <button @click="downloadFirmwareAsset(asset.url,asset.name)" class="btn-outline text-xs" :disabled="firmwareDownloading===asset.name" x-show="firmwareDownloading!==asset.name">
+                    <i class="ti ti-download" style="font-size:11px"></i>
+                  </button>
+                  <div x-show="firmwareDownloading===asset.name" class="flex items-center gap-1">
+                    <span class="text-xs font-mono" style="color:var(--accent)" x-text="firmwareProgress+'%'"></span>
+                    <div class="su-bar-wrap" style="width:60px"><div class="su-bar" :style="{width:firmwareProgress+'%'}"></div></div>
+                  </div>
+                </div>
               </template>
-            </tbody>
-          </table>
-        </div>
+            </div>
+          </div>
+        </template>
       </div>
-      <div x-show="filteredDevices.length===0" class="card-base p-8 text-center">
-        <i class="ti ti-radio" style="font-size:32px;color:var(--text-muted)"></i>
-        <p class="text-xs mt-2" style="color:var(--text-muted)" x-text="deviceSearch?'Nessun drone corrisponde.':'Nessun drone rilevato.'"></p>
+      <div x-show="firmwareStatus==='empty'" class="card-base p-8 text-center mt-4">
+        <i class="ti ti-cloud-off" style="font-size:32px;color:var(--text-muted)"></i>
+        <p class="text-xs mt-2" style="color:var(--text-muted)">Nessuna release trovata. Clicca "Controlla release" per verificare.</p>
       </div>
-    </section>
-
-    <!-- ====== MAP ====== -->
-    <section x-show="activeTab==='map'" x-cloak>
-      <div class="page-header"><h1>Mappa</h1><p class="text-muted" x-text="validDevices.length+' drone'+(validDevices.length!==1?'s':'')+' posizionati'"></p></div>
-      <div class="map-container card-base">
-        <svg viewBox="-180 -90 360 180" class="map-svg" :style="{background:theme==='dark'?'#0a1628':'#e8f0fe'}">
-          <g x-html="mapGridSvg"></g>
-          <circle cx="0" cy="0" r="1.5" fill="none" stroke="var(--accent)" stroke-width="0.3" opacity="0.3"/>
-          <line x1="-3" y1="0" x2="3" y2="0" stroke="var(--accent)" stroke-width="0.2" opacity="0.2"/>
-          <line x1="0" y1="-3" x2="0" y2="3" stroke="var(--accent)" stroke-width="0.2" opacity="0.2"/>
-          <g x-html="mapMarkersSvg"></g>
-        </svg>
-        <div class="map-legend">
-          <div class="flex items-center gap-2"><span class="dot" style="width:10px;height:10px;background:var(--accent-green)"></span><span class="text-xs" style="color:var(--text-secondary)">RSSI &gt; -70 dBm</span></div>
-          <div class="flex items-center gap-2"><span class="dot" style="width:10px;height:10px;background:var(--accent-orange)"></span><span class="text-xs" style="color:var(--text-secondary)">RSSI &le; -70 dBm</span></div>
-        </div>
-        <div x-show="validDevices.length===0" class="map-empty"><p class="text-xs" style="color:var(--text-muted)">Nessun dato di posizione</p></div>
-      </div>
-    </section>
-
-    <!-- ====== TIMELINE ====== -->
-    <section x-show="activeTab==='timeline'" x-cloak>
-      <div class="flex items-center justify-between mb-4">
-        <div class="page-header mb-0"><h1>Timeline</h1><p class="text-muted" x-text="packets.length+' pacchetti'"></p></div>
-        <button @click="clearLog()" class="btn-outline text-xs"><i class="ti ti-trash" style="font-size:12px"></i> Clear</button>
-      </div>
-      <div x-show="packets.length >= 2" class="card-base p-3 mb-4">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold uppercase tracking-wider" style="color:var(--text-muted)">RSSI per MAC</span>
-        </div>
-        <svg x-html="timelineChartSvg" class="w-full" style="height:96px"></svg>
-        <div class="flex flex-wrap gap-2 mt-2" x-show="macColorList.length > 0">
-          <template x-for="item in macColorList" :key="item.mac">
-            <span class="mac-legend-item">
-              <span class="mac-legend-swatch" :style="{background:item.color}"></span>
-              <span class="text-xs font-mono" style="color:var(--text-muted)" x-text="item.mac.slice(-8)"></span>
-            </span>
+      <div class="card-base p-3 mt-4" x-show="firmwareCached.length>0">
+        <h4 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Firmware in cache</h4>
+        <div class="firmware-grid">
+          <template x-for="f in firmwareCached" :key="f.name">
+            <div class="firmware-item">
+              <i :class="firmwareAssetIcon(f.name)" class="ti" style="font-size:14px;color:var(--accent-green)"></i>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-mono truncate" style="color:var(--text)" x-text="f.name"></div>
+                <div class="text-xs" style="color:var(--text-muted)" x-text="(f.size/1024).toFixed(0)+' KB'"></div>
+              </div>
+              <button @click="deleteCachedFirmware(f.name)" class="btn-outline text-xs"><i class="ti ti-trash" style="font-size:11px;color:var(--accent-red)"></i></button>
+            </div>
           </template>
         </div>
       </div>
-      <div class="flex items-center gap-3 mb-3 flex-wrap">
-        <input class="input-min" style="width:140px" placeholder="Filtra MAC..." x-model="macFilter">
-        <input class="input-min" style="width:140px" placeholder="Filtra tipo msg..." x-model="msgFilter">
-      </div>
-      <div class="log-console" style="max-height:calc(100vh - 320px);min-height:200px">
-        <template x-for="p in filteredPackets" :key="p._idx">
-          <div class="log-line">
-            <span class="log-time" x-text="fmtTime(p.timestamp)"></span>
-            <span class="log-mac" x-text="p.mac.slice(-8)"></span>
-            <span class="log-rssi" :style="{color:p.rssi>-70?'var(--accent-green)':p.rssi>-85?'var(--accent-orange)':'var(--text-muted)'}" x-text="p.rssi+'dBm'"></span>
-            <span class="log-msg" x-text="p.msgType"></span>
-          </div>
-        </template>
-        <div x-show="filteredPackets.length===0" class="text-xs" style="color:var(--text-muted)">In attesa di pacchetti...</div>
+      <div class="card-base p-4 mt-4">
+        <h4 class="text-xs font-semibold uppercase tracking-wider mb-2" style="color:var(--text-muted)">Flash via seriale</h4>
+        <p class="text-xs" style="color:var(--text-secondary)">Connetti l'ESP32 via USB, seleziona i file firmware nella cache e usa esptool per flashare. La connessione seriale deve essere attiva.</p>
+        <p class="text-xs mt-2" style="color:var(--text-muted)"><i class="ti ti-info-circle" style="font-size:11px"></i> Flasher automatico in sviluppo — per ora usa ESP Web Tools via browser.</p>
       </div>
     </section>
 
-    <!-- ====== CAPTURE ====== -->
-    <section x-show="activeTab==='capture'" x-cloak>
-      <div class="page-header"><h1>Capture</h1><p class="text-muted">Gestione sorgenti di cattura</p></div>
-      <div class="grid-2">
-        <div class="stat-card">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2"><i class="ti ti-wifi" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">WiFi Beacon</span></div>
-            <button @click="toggleWifi()" class="chip-btn" :class="wifiActive?'active':''" x-text="wifiActive?'ATTIVO':'INATTIVO'"></button>
-          </div>
-          <p class="text-xs" style="color:var(--text-secondary)">Cattura pacchetti WiFi beacon (NAV/Beacon) su interfaccia monitor.</p>
-          <p class="text-xs mt-2 font-mono" :style="{color:wifiActive?'var(--accent-green)':'var(--text-muted)'}" x-text="wifiActive?'● In ascolto...':'Fare clic per avviare'"></p>
-        </div>
-        <div class="stat-card">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2"><i class="ti ti-brand-bluetooth" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">Bluetooth LE</span></div>
-            <button @click="toggleBle()" class="chip-btn" :class="bleActive?'active':''" x-text="bleActive?'ATTIVO':'INATTIVO'"></button>
-          </div>
-          <p class="text-xs" style="color:var(--text-secondary)">Scansione BLE per pacchetti Open DroneID.</p>
-          <p class="text-xs mt-2 font-mono" :style="{color:bleActive?'var(--accent-green)':'var(--text-muted)'}" x-text="bleActive?'● In scansione...':'Fare clic per avviare'"></p>
-        </div>
-        <div class="stat-card">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2"><i class="ti ti-cable" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">Seriale</span></div>
-            <button @click="toggleSerial()" class="chip-btn" :class="serialActive?'active':''" x-text="serialActive?'CONNESSO':'DISCONNESSO'"></button>
-          </div>
-          <p class="text-xs" style="color:var(--text-secondary)">Lettura da ricevitore seriale (es. ESP32 via UART).</p>
-          <p class="text-xs mt-2 font-mono" :style="{color:serialActive?'var(--accent-green)':'var(--text-muted)'}" x-text="serialActive?'● Connesso':'Fare clic per connettere'"></p>
-        </div>
-        <div class="stat-card">
-          <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2"><i class="ti ti-file-upload" style="color:var(--accent);font-size:16px"></i><span class="text-sm font-semibold" style="color:var(--text)">PCAP Import</span></div>
-            <button @click="importPcap()" class="btn-outline text-xs">Importa PCAP</button>
-          </div>
-          <p class="text-xs" style="color:var(--text-secondary)">Carica file PCAP per analisi offline di pacchetti WiFi/BT.</p>
-          <p class="text-xs mt-2" style="color:var(--text-muted)">Supporta formati libpcap e pcapng</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ====== SETTINGS ====== -->
-    <section x-show="activeTab==='settings'" x-cloak>
-      <div class="page-header"><h1>Impostazioni</h1><p class="text-muted">Configurazione stazione di terra</p></div>
-      <div class="settings-section">
-        <div class="card-base p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="ti" :class="theme==='dark'?'ti-moon':'ti-sun'" style="font-size:18px" :style="{color:theme==='dark'?'var(--accent)':'var(--accent-orange)'}"></i>
-            <div><div class="text-sm font-medium" style="color:var(--text)">Tema</div><div class="text-xs" style="color:var(--text-muted)" x-text="theme==='dark'?'Scuro':'Chiaro'"></div></div>
-          </div>
-          <button @click="toggleTheme()" class="btn-outline text-xs" x-text="theme==='dark'?'Passa a chiaro':'Passa a scuro'"></button>
-        </div>
-        <div class="card-base p-4 flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <i class="ti ti-refresh" style="color:var(--accent-red);font-size:18px"></i>
-            <div><div class="text-sm font-medium" style="color:var(--text)">Factory Reset</div><div class="text-xs" style="color:var(--text-muted)">Azzera tutti i dati e ripristina le impostazioni</div></div>
-          </div>
-          <button @click="factoryReset()" class="btn-danger text-xs">Reset</button>
-        </div>
-        <div class="card-base p-4">
-          <div class="flex items-center gap-3 mb-2"><img src="images/logo.svg" alt="ESP DRONE REMOTEID" style="height:48px;width:auto"><div class="text-sm font-medium" style="color:var(--text)">ESP DRONE REMOTEID — RID Hub</div></div>
-          <div class="text-xs space-y-1" style="color:var(--text-muted)"><p>Versione <span x-text="appVersion||'1.0.0'"></span></p><p>Open DroneID Ground Station — ASTM F3411-22a</p><p>Ricezione WiFi Beacon / BLE / Seriale / PCAP</p><p class="mt-2"><a href="https://github.com/VOLTEKOVER/ESP_DRONE_REMOTEID" target="_blank" style="color:var(--accent);text-decoration:none">GitHub ↗</a></p></div>
-        </div>
-      </div>
-    </section>
   </main>
 </div>
 

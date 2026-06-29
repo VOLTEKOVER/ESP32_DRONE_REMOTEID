@@ -84,6 +84,79 @@ function createWindow() {
   mainWindow.on('unmaximize', () => { mainWindow?.webContents.send('window-state', false); });
 }
 
+let updateInterval = null;
+
+// === PAGE CACHE (auto-sync docs/ from GitHub) ===
+const PAGE_CACHE_URLS = {
+  landing: 'https://raw.githubusercontent.com/valeriogiacomo/ESP32_DRONE_ID/main/docs/index.html',
+  guide: 'https://raw.githubusercontent.com/valeriogiacomo/ESP32_DRONE_ID/main/docs/guide.html',
+  configure: 'https://raw.githubusercontent.com/valeriogiacomo/ESP32_DRONE_ID/main/docs/config(demo).html',
+};
+
+const PAGE_CACHE_DIR = path.join(app.getPath('userData'), 'page-cache');
+
+function ensurePageCacheDir() {
+  if (!fs.existsSync(PAGE_CACHE_DIR)) {
+    fs.mkdirSync(PAGE_CACHE_DIR, { recursive: true });
+  }
+}
+
+function httpGetText(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'RID-Hub' } }, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+      let body = '';
+      res.on('data', d => body += d);
+      res.on('end', () => resolve(body));
+    }).on('error', reject);
+  });
+}
+
+async function updatePageCache(name) {
+  const url = PAGE_CACHE_URLS[name];
+  if (!url) return { error: 'unknown page' };
+  try {
+    const html = await httpGetText(url);
+    ensurePageCacheDir();
+    const filePath = path.join(PAGE_CACHE_DIR, `${name}.html`);
+    fs.writeFileSync(filePath, html, 'utf-8');
+    return { success: true, cachedAt: Date.now() };
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+function getCachedPage(name) {
+  const filePath = path.join(PAGE_CACHE_DIR, `${name}.html`);
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath, 'utf-8');
+  }
+  const fallbackPaths = {
+    landing: path.join(__dirname, '..', 'docs', 'index.html'),
+    guide: path.join(__dirname, '..', 'docs', 'guide.html'),
+    configure: path.join(__dirname, '..', 'docs', 'config(demo).html'),
+  };
+  const fb = fallbackPaths[name];
+  if (fb && fs.existsSync(fb)) {
+    return fs.readFileSync(fb, 'utf-8');
+  }
+  return null;
+}
+
+async function refreshAllPages() {
+  const results = {};
+  for (const name of Object.keys(PAGE_CACHE_URLS)) {
+    results[name] = await updatePageCache(name);
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('page-cache-update', results);
+  }
+  return results;
+}
+
 // === UPDATER ===
 autoUpdater.autoDownload = false;
 autoUpdater.autoInstallOnAppQuit = true;
@@ -92,7 +165,6 @@ function checkForUpdates() {
   if (app.isPackaged) {
     autoUpdater.checkForUpdates().catch(() => {});
   } else {
-    // Dev mode: check GitHub API
     const repo = 'VOLTEKOVER/ESP_DRONE_REMOTEID';
     https.get(`https://api.github.com/repos/${repo}/releases/latest`, {
       headers: { 'User-Agent': 'RID-Hub' },
@@ -144,6 +216,13 @@ autoUpdater.on('error', (err) => {
 app.whenReady().then(() => {
   createWindow();
   checkForUpdates();
+
+  // Initial page cache sync (fire-and-forget)
+  refreshAllPages();
+
+  // Periodic refresh every 60 minutes
+  updateInterval = setInterval(refreshAllPages, 60 * 60 * 1000);
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
@@ -151,6 +230,7 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   stopAllCapture();
+  if (updateInterval) clearInterval(updateInterval);
   if (process.platform !== 'darwin') app.quit();
 });
 
@@ -252,6 +332,121 @@ ipcMain.handle('import-pcap', async () => {
 
 ipcMain.handle('get-version', () => app.getVersion());
 
+// === PAGE CACHE IPC ===
+ipcMain.handle('get-page-cache', (_, name) => {
+  const html = getCachedPage(name);
+  return { html, name };
+});
+
+ipcMain.handle('refresh-page-cache', async (_, name) => {
+  const result = await updatePageCache(name);
+  if (result.success) {
+    emitToRenderer('page-cache-update', { [name]: result });
+  }
+  return result;
+});
+
+ipcMain.handle('refresh-all-pages', async () => {
+  return await refreshAllPages();
+});
+
+// === FIRMWARE (GitHub Releases + cache) ===
+const FIRMWARE_CACHE_DIR = path.join(app.getPath('userData'), 'firmware-cache');
+
+function ensureFirmwareCache() {
+  if (!fs.existsSync(FIRMWARE_CACHE_DIR)) fs.mkdirSync(FIRMWARE_CACHE_DIR, { recursive: true });
+}
+
+function githubApiGet(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'RID-Hub' } }, (res) => {
+      let body = '';
+      res.on('data', d => body += d);
+      res.on('end', () => { try { resolve(JSON.parse(body)); } catch (_) { reject(new Error('Parse failed')); } });
+    }).on('error', reject);
+  });
+}
+
+ipcMain.handle('check-firmware-releases', async () => {
+  try {
+    const rel = await githubApiGet('https://api.github.com/repos/VOLTEKOVER/ESP_DRONE_REMOTEID/releases?per_page=5');
+    const releases = (Array.isArray(rel) ? rel : [rel]).map(r => ({
+      tag: r.tag_name || '',
+      name: r.name || r.tag_name || '',
+      published: r.published_at || '',
+      prerelease: r.prerelease || false,
+      assets: (r.assets || []).map(a => ({
+        name: a.name, size: a.size, url: a.browser_download_url,
+        contentType: a.content_type,
+      })),
+    }));
+    return releases;
+  } catch (_) { return []; }
+});
+
+ipcMain.handle('download-firmware-asset', async (_, url, fileName) => {
+  ensureFirmwareCache();
+  const dest = path.join(FIRMWARE_CACHE_DIR, fileName);
+  if (fs.existsSync(dest)) return { path: dest, cached: true };
+  return new Promise((resolve) => {
+    https.get(url, { headers: { 'User-Agent': 'RID-Hub' } }, (res) => {
+      const file = fs.createWriteStream(dest);
+      const total = parseInt(res.headers['content-length'] || '0', 10);
+      let downloaded = 0;
+      res.on('data', (chunk) => {
+        downloaded += chunk.length;
+        const percent = total ? Math.round(downloaded / total * 100) : 0;
+        mainWindow?.webContents.send('firmware-download-progress', { fileName, percent, downloaded, total });
+      });
+      res.pipe(file);
+      file.on('finish', () => { file.close(); resolve({ path: dest, cached: false }); });
+      file.on('error', () => resolve({ error: 'Write failed' }));
+    }).on('error', () => resolve({ error: 'Download failed' }));
+  });
+});
+
+ipcMain.handle('get-cached-firmware', () => {
+  ensureFirmwareCache();
+  try {
+    const files = fs.readdirSync(FIRMWARE_CACHE_DIR);
+    return files.map(f => {
+      const p = path.join(FIRMWARE_CACHE_DIR, f);
+      const stat = fs.statSync(p);
+      return { name: f, size: stat.size, modified: stat.mtime.toISOString() };
+    });
+  } catch (_) { return []; }
+});
+
+ipcMain.handle('delete-cached-firmware', (_, fileName) => {
+  try {
+    const p = path.join(FIRMWARE_CACHE_DIR, fileName);
+    if (fs.existsSync(p)) fs.unlinkSync(p);
+    return true;
+  } catch (_) { return false; }
+});
+
+// === DEVICE CONFIG ===
+ipcMain.handle('send-device-command', async (_, command) => {
+  try {
+    if (serialCapture._port && serialCapture._port.isOpen) {
+      serialCapture._port.write(command + '\n');
+      return true;
+    }
+    return false;
+  } catch (_) { return false; }
+});
+
+ipcMain.handle('reboot-device', async () => {
+  try {
+    if (serialCapture._port && serialCapture._port.isOpen) {
+      serialCapture._port.write('reboot\n');
+      return true;
+    }
+    return false;
+  } catch (_) { return false; }
+});
+
+// === APP UPDATE ===
 ipcMain.handle('check-update', () => {
   if (app.isPackaged) {
     autoUpdater.checkForUpdates();

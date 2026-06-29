@@ -2,7 +2,8 @@ function app() {
   return {
     // === STATE ===
     theme: 'light',
-    activeTab: 'dashboard',
+    activeTab: 'ground',
+    groundTab: 'dashboard',
     isSidebarCollapsed: false,
     devices: [],
     packets: [],
@@ -29,15 +30,33 @@ function app() {
     updateProgress: 0,
     updateDownloading: false,
     updateError: '',
+    showSettingsModal: false,
     _timer: null,
 
+    // === PAGE CACHE (auto-sync docs/) ===
+    pageCacheStatus: { landing: '', guide: '', configure: '' },
+    pageCacheContent: { landing: '', guide: '', configure: '' },
+
+    // === FIRMWARE ===
+    firmwareReleases: [],
+    firmwareDownloading: null,
+    firmwareProgress: 0,
+    firmwareCached: [],
+    firmwareStatus: '',
+
     navItems: [
+      { id: 'ground',    label: 'Ground',      icon: 'ti-layout-dashboard' },
+      { id: 'landing',   label: 'Landing',      icon: 'ti-world' },
+      { id: 'guide',     label: 'Guide',        icon: 'ti-book' },
+      { id: 'configure', label: 'Configure',    icon: 'ti-settings-cog' },
+      { id: 'firmware',  label: 'Firmware',     icon: 'ti-microchip' },
+    ],
+    groundSubs: [
       { id: 'dashboard', label: 'Dashboard', icon: 'ti-layout-dashboard' },
-      { id: 'devices',    label: 'Devices',    icon: 'ti-radio' },
-      { id: 'map',        label: 'Map',        icon: 'ti-map' },
-      { id: 'timeline',   label: 'Timeline',   icon: 'ti-timeline' },
-      { id: 'capture',    label: 'Capture',    icon: 'ti-player-record' },
-      { id: 'settings',   label: 'Settings',   icon: 'ti-settings' },
+      { id: 'devices',   label: 'Devices',   icon: 'ti-radio' },
+      { id: 'map',       label: 'Map',       icon: 'ti-map' },
+      { id: 'timeline',  label: 'Timeline',  icon: 'ti-timeline' },
+      { id: 'capture',   label: 'Capture',   icon: 'ti-player-record' },
     ],
 
     // === COMPUTED ===
@@ -73,7 +92,7 @@ function app() {
             case 'uaType': cmp = a.uaType.localeCompare(b.uaType); break
           }
           return this.sortAsc ? cmp : -cmp
-        })
+      })
     },
     get filteredPackets() {
       return this.packets.filter(p => {
@@ -202,16 +221,13 @@ function app() {
 
     // === METHODS ===
     init() {
-      // Theme
       document.documentElement.setAttribute('data-theme', this.theme)
 
-      // Window state
       if (window.RID?.windowIsMaximized) {
         window.RID.windowIsMaximized().then(m => { this.isMaximized = m })
       }
       window.RID?.onWindowState(m => { this.isMaximized = m })
 
-      // App version
       if (window.RID?.getVersion) {
         window.RID.getVersion().then(v => { this.appVersion = v })
       } else {
@@ -220,32 +236,18 @@ function app() {
 
       // Update listeners
       window.RID?.onUpdateChecked(d => {
-        if (d.hasUpdate) {
-          this.updateStatus = 'available'
-          this.updateLatest = d.latest
-        } else {
-          this.updateStatus = 'up-to-date'
-        }
+        if (d.hasUpdate) { this.updateStatus = 'available'; this.updateLatest = d.latest }
+        else { this.updateStatus = 'up-to-date' }
       })
-      window.RID?.onUpdateAvailable(d => {
-        this.updateStatus = 'available'
-        this.updateLatest = d.version
-      })
-      window.RID?.onUpdateProgress(d => {
-        this.updateDownloading = true
-        this.updateProgress = d.percent
-      })
+      window.RID?.onUpdateAvailable(d => { this.updateStatus = 'available'; this.updateLatest = d.version })
+      window.RID?.onUpdateProgress(d => { this.updateDownloading = true; this.updateProgress = d.percent })
       window.RID?.onUpdateStatus(s => {
         this.updateDownloading = false
         if (s === 'downloaded') this.updateStatus = 'downloaded'
         else if (s === 'up-to-date') this.updateStatus = 'up-to-date'
         else if (s === 'checking') this.updateStatus = 'checking'
       })
-      window.RID?.onUpdateError(m => {
-        this.updateStatus = 'error'
-        this.updateError = m
-        this.updateDownloading = false
-      })
+      window.RID?.onUpdateError(m => { this.updateStatus = 'error'; this.updateError = m; this.updateDownloading = false })
 
       // Packet listener
       window.RID?.onPacket(data => {
@@ -257,12 +259,10 @@ function app() {
         }))
         this.totalPackets = data.totalPackets || 0
         this.sessionPackets = data.sessionPackets || 0
-
         if (data.raw) {
           const now = Date.now()
           this.packetTimestamps.push(now)
           if (this.packetTimestamps.length > 3000) this.packetTimestamps = this.packetTimestamps.slice(-2000)
-
           this.packets.push({
             _idx: this.packetIdCounter++,
             mac: data.raw.mac || 'unknown',
@@ -270,18 +270,63 @@ function app() {
             msgType: data.raw.summary || data.raw.msg_type || 'UNKNOWN',
             timestamp: now,
           })
-          if (this.packets.length > 5000) {
-            this.packets = this.packets.slice(-3000)
+          if (this.packets.length > 5000) this.packets = this.packets.slice(-3000)
+        }
+      })
+
+      // Page cache listeners
+      window.RID?.onPageCacheUpdate(results => {
+        for (const [name, result] of Object.entries(results)) {
+          if (this.pageCacheStatus[name] === 'syncing') {
+            this.pageCacheStatus[name] = result.success ? 'ok' : 'error'
           }
         }
       })
+
+      // Firmware progress
+      window.RID?.onFirmwareDownloadProgress(d => {
+        if (d.fileName === this.firmwareDownloading) {
+          this.firmwareProgress = d.percent
+        }
+      })
+
+      // PostMessage bridge for Configure iframe (serial commands)
+      window.addEventListener('message', (e) => {
+        if (e.source?.frameElement?.id !== 'iframe-configure') return
+        const msg = e.data
+        if (!msg || !msg.type) return
+        switch (msg.type) {
+          case 'serial-send':
+            if (window.RID?.sendDeviceCommand) {
+              window.RID.sendDeviceCommand(msg.cmd)
+            }
+            break
+          case 'reboot-device':
+            if (window.RID?.rebootDevice) {
+              window.RID.rebootDevice()
+            }
+            break
+          case 'list-ports':
+            window.RID?.listPorts().then(ports => {
+              if (e.source) {
+                e.source.postMessage({ type: 'list-ports-response', ports }, '*')
+              }
+            })
+            break
+        }
+      })
+
+      // Load firmware cache
+      this.loadFirmwareCached()
     },
 
-    fmtTime(ts) {
-      return new Date(ts).toLocaleTimeString()
+    setTab(t) {
+      this.activeTab = t
+      // Load page cache content when switching to a doc tab
+      if (['landing', 'guide', 'configure'].includes(t)) {
+        this.$nextTick(() => this.loadPageContent(t))
+      }
     },
-
-    setTab(t) { this.activeTab = t },
 
     toggleTheme() {
       this.theme = this.theme === 'dark' ? 'light' : 'dark'
@@ -295,13 +340,8 @@ function app() {
 
     toggleRecording() {
       this.isRecording = !this.isRecording
-      if (this.isRecording) {
-        window.RID?.startRecording()
-        this.notify('Registrazione avviata', 'success')
-      } else {
-        window.RID?.stopRecording()
-        this.notify('Registrazione fermata', 'info')
-      }
+      if (this.isRecording) { window.RID?.startRecording(); this.notify('Registrazione avviata', 'success') }
+      else { window.RID?.stopRecording(); this.notify('Registrazione fermata', 'info') }
     },
 
     toggleWifi() {
@@ -311,10 +351,7 @@ function app() {
           if (!ok) { this.wifiActive = false; this.notify('Errore avvio WiFi', 'error') }
           else this.notify('Cattura WiFi avviata', 'success')
         })
-      } else {
-        window.RID?.stopWiFi()
-        this.notify('Cattura WiFi fermata', 'info')
-      }
+      } else { window.RID?.stopWiFi(); this.notify('Cattura WiFi fermata', 'info') }
     },
 
     toggleBle() {
@@ -324,10 +361,7 @@ function app() {
           if (!ok) { this.bleActive = false; this.notify('Errore avvio BLE', 'error') }
           else this.notify('Cattura BLE avviata', 'success')
         })
-      } else {
-        window.RID?.stopBLE()
-        this.notify('Cattura BLE fermata', 'info')
-      }
+      } else { window.RID?.stopBLE(); this.notify('Cattura BLE fermata', 'info') }
     },
 
     toggleSerial() {
@@ -339,50 +373,30 @@ function app() {
               if (ok) this.notify('Connessione seriale avviata', 'success')
               else { this.serialActive = false; this.notify('Errore connessione seriale', 'error') }
             })
-          } else {
-            this.serialActive = false
-            this.notify('Nessuna porta seriale trovata', 'error')
-          }
+          } else { this.serialActive = false; this.notify('Nessuna porta seriale trovata', 'error') }
         })
-      } else {
-        window.RID?.disconnectSerial()
-        this.notify('Connessione seriale chiusa', 'info')
-      }
+      } else { window.RID?.disconnectSerial(); this.notify('Connessione seriale chiusa', 'info') }
     },
 
     importPcap() {
       window.RID?.importPcap().then(result => {
-        if (typeof result === 'string') {
-          this.notify(`Importati pacchetti PCAP`, 'success')
-        } else if (result && result.error) {
-          this.notify(`Errore PCAP: ${result.error}`, 'error')
-        }
+        if (typeof result === 'string') { this.notify(`Importati pacchetti PCAP`, 'success') }
+        else if (result && result.error) { this.notify(`Errore PCAP: ${result.error}`, 'error') }
       })
     },
 
     resetSession() {
-      this.packets = []
-      this.packetTimestamps = []
-      this.sessionPackets = 0
-      this.totalPackets = 0
-      this.isRecording = false
-      this.startTime = Date.now()
+      this.packets = []; this.packetTimestamps = []; this.sessionPackets = 0; this.totalPackets = 0
+      this.isRecording = false; this.startTime = Date.now()
       window.RID?.resetStats()
       this.notify('Sessione azzerata', 'success')
     },
 
     factoryReset() {
-      this.wifiActive = false
-      this.bleActive = false
-      this.serialActive = false
-      this.isRecording = false
-      this.devices = []
-      this.packets = []
-      this.packetTimestamps = []
-      this.totalPackets = 0
-      this.sessionPackets = 0
-      this.startTime = Date.now()
-      this.activeTab = 'dashboard'
+      this.wifiActive = false; this.bleActive = false; this.serialActive = false
+      this.isRecording = false; this.devices = []; this.packets = []; this.packetTimestamps = []
+      this.totalPackets = 0; this.sessionPackets = 0; this.startTime = Date.now()
+      this.activeTab = 'ground'; this.groundTab = 'dashboard'
       this.theme = 'dark'
       document.documentElement.setAttribute('data-theme', 'dark')
       window.RID?.resetStats()
@@ -404,36 +418,100 @@ function app() {
       else { this.sortKey = key; this.sortAsc = false }
     },
 
-    clearLog() {
-      this.packets = []
-      this.notify('Log svuotato', 'info')
-    },
+    clearLog() { this.packets = []; this.notify('Log svuotato', 'info') },
 
     checkUpdate() {
       this.updateStatus = 'checking'
-      if (window.RID) {
-        window.RID.checkUpdate()
+      if (window.RID) { window.RID.checkUpdate() }
+      else { setTimeout(() => { this.updateStatus = 'error'; this.updateError = 'No back-end' }, 1000) }
+    },
+    downloadUpdate() { this.updateDownloading = true; this.updateProgress = 0; if (window.RID) { window.RID.downloadUpdate() } },
+    restartApp() { window.RID?.restartApp() },
+
+    // === PAGE CACHE ===
+    async loadPageContent(name) {
+      const iframe = document.getElementById(`iframe-${name}`)
+      if (!iframe) return
+      this.pageCacheStatus[name] = 'syncing'
+      if (window.RID?.getPageCache) {
+        const result = await window.RID.getPageCache(name)
+        const html = result?.html
+        if (html) {
+          iframe.srcdoc = html
+          this.pageCacheStatus[name] = 'ok'
+        } else {
+          iframe.srcdoc = '<p>Contenuto non disponibile offline.</p>'
+          this.pageCacheStatus[name] = 'error'
+        }
       } else {
-        setTimeout(() => { this.updateStatus = 'error'; this.updateError = 'No back-end' }, 1000)
+        iframe.srcdoc = '<p>Bridge non disponibile.</p>'
+        this.pageCacheStatus[name] = 'error'
       }
     },
-    downloadUpdate() {
-      this.updateDownloading = true
-      this.updateProgress = 0
-      if (window.RID) {
-        window.RID.downloadUpdate()
+
+    async refreshPage(name) {
+      if (window.RID?.refreshPageCache) {
+        this.pageCacheStatus[name] = 'syncing'
+        const result = await window.RID.refreshPageCache(name)
+        if (result.success) {
+          this.loadPageContent(name)
+          this.notify(`${name} aggiornato`, 'success')
+        } else {
+          this.pageCacheStatus[name] = 'error'
+          this.notify(`Errore aggiornamento ${name}`, 'error')
+        }
       }
     },
-    restartApp() {
-      window.RID?.restartApp()
+
+    // === FIRMWARE ===
+    async loadFirmwareReleases() {
+      this.firmwareStatus = 'checking'
+      if (window.RID?.checkFirmwareReleases) {
+        const releases = await window.RID.checkFirmwareReleases()
+        this.firmwareReleases = releases || []
+        this.firmwareStatus = releases.length ? 'available' : 'empty'
+      } else { this.firmwareStatus = 'error' }
     },
+
+    async loadFirmwareCached() {
+      if (window.RID?.getCachedFirmware) {
+        this.firmwareCached = (await window.RID.getCachedFirmware()) || []
+      }
+    },
+
+    async downloadFirmwareAsset(url, name) {
+      this.firmwareDownloading = name
+      this.firmwareProgress = 0
+      if (window.RID?.downloadFirmwareAsset) {
+        const result = await window.RID.downloadFirmwareAsset(url, name)
+        if (result.error) { this.notify(`Errore download ${name}: ${result.error}`, 'error') }
+        else { this.notify(`Scaricato ${name}`, 'success') }
+        this.firmwareDownloading = null
+        this.loadFirmwareCached()
+      }
+    },
+
+    deleteCachedFirmware(name) {
+      if (window.RID?.deleteCachedFirmware) {
+        window.RID.deleteCachedFirmware(name)
+        this.loadFirmwareCached()
+        this.notify(`Eliminato ${name}`, 'info')
+      }
+    },
+
+    firmwareAssetIcon(name) {
+      if (name.includes('bootloader')) return 'ti-device-floppy'
+      if (name.includes('partition')) return 'ti-table'
+      if (name.includes('esp-drone')) return 'ti-microchip'
+      return 'ti-file'
+    },
+
+    fmtTime(ts) { return new Date(ts).toLocaleTimeString() },
 
     notify(text, type = 'info') {
       const id = Math.random().toString(36).substring(2, 9)
       this.toasts.push({ id, text, type })
-      setTimeout(() => {
-        this.toasts = this.toasts.filter(t => t.id !== id)
-      }, 3500)
+      setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id) }, 3500)
     },
   }
 }

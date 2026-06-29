@@ -27,11 +27,15 @@
 #define ODID_MESSAGE_SIZE 25
 #endif
 /* Values used by identity readiness gate */
+#ifndef INV_ALT
 #define INV_ALT  (-1000.0f)
+#endif
 #define INV_SPEED_H 255
 #define INV_SPEED_V 63
 #define INV_DIR 361
+#ifndef MAX_TIMESTAMP
 #define MAX_TIMESTAMP 0xFFFF
+#endif
 
 typedef enum {
     RID_PROTOCOL_UNKNOWN = 0,
