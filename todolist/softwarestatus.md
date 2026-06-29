@@ -385,26 +385,42 @@
 
 ---
 
-## `RID_Hub/` — Ground Station (Electron, no Python)
+## `RID_Hub/` — Ground Station (Electron + React)
 
-**Architettura completamente riscritta** — Python eliminato, WebSocket eliminato, tutto in Electron nativo.
+**Python eliminato, WebSocket eliminato, HTML vanilla eliminato.** Stack: Vite 8 + React 19 + TypeScript + Ant Design 6 + react-leaflet + react-chartjs-2.
 
 ### Structure
 ```
 RID_Hub/
 ├── main.js              # Electron main process (IPC nativa)
-├── package.json         # Dipendenze Electron (serialport opt)
+├── package.json         # Dipendenze Electron + React + Ant Design
 ├── preload.js           # contextBridge per IPC renderer
+├── vite.config.ts       # Vite + vite-plugin-electron config
+├── tsconfig.json        # TypeScript strict config
 ├── src/
 │   ├── decoder.js       # ASTM F3411-22a decoder (port da Python)
 │   ├── tracker.js       # RIDDevice tracking (port da Python)
 │   └── capture.js       # WiFi/BLE/Serial (Node moduli opzionali)
 ├── renderer/
-│   ├── index.html       # UI: 6 tab (Devices, Map, Timeline, Stats, Capture, About)
-│   ├── app.js           # IPC Client + Chart.js + Leaflet
-│   └── style.css        # Dark/light theme (riusato da v2)
+│   ├── index.html       # Root SPA mount point
+│   └── src/
+│       ├── main.tsx     # React 19 entry
+│       ├── App.tsx      # Layout Ant Design (Sider+Menu+Content)
+│       ├── types/
+│       │   └── index.ts # TypeScript interfaces
+│       ├── hooks/
+│       │   └── useRidApi.ts  # IPC bridge hook (window.RID.*)
+│       └── components/
+│           ├── DashboardTab.tsx   # Stat card + recording controls
+│           ├── DevicesTab.tsx     # Table Ant Design (ordinabile)
+│           ├── MapTab.tsx         # react-leaflet (dark/light tiles)
+│           ├── TimelineTab.tsx    # Packet log + RSSI chart.js
+│           ├── CaptureTab.tsx     # WiFi/BLE/Serial/PCAP controls
+│           └── DetailPanel.tsx    # Drawer Ant Design dettaglio
+├── dist-electron/       # Main+preload bundled output (gitignored)
+├── dist/                # Renderer build output (gitignored)
 ├── node_modules/        # (gitignored)
-└── dist/                # electron-builder output (gitignored)
+└── release/             # electron-builder output (gitignored)
 ```
 
 ### Core (`src/`)
@@ -425,28 +441,60 @@ RID_Hub/
 - `SerialCapture`: usa `serialport` (opzionale) per ESP32 via USB.
 - Ogni classe ha `available` getter + graceful fallback.
 
-### Renderer (`renderer/`)
+### Renderer (`renderer/src/` — React + Ant Design 6)
 
-#### `index.html` (~200 lines)
-- 6 tab: Devices, Map, Timeline, Statistics, **Capture**, About.
-- Capture tab con card per WiFi, BLE, Serial, import PCAP.
-- Leaflet map, dettaglio dispositivo a scomparsa, recording.
+#### `main.tsx` (~10 lines)
+- Entry point: `ReactDOM.createRoot`, monta `<App />` con `StrictMode`.
+- Importa `leaflet/dist/leaflet.css` per le tile della mappa.
 
-#### `app.js` (~500 lines)
-- Comunica via `window.RID.*` IPC bridge (da preload.js).
-- Stesse funzionalità della v2 WebSocket: tabella, mappa, grafici, CSV/KML, recording.
-- Capture tab: start/stop WiFi, BLE, Serial + refresh porte seriali.
-- Notifiche desktop, dark mode, filtri RSSI/attivi.
+#### `App.tsx` (~90 lines)
+- `ConfigProvider` Ant Design con dark/light algorithm toggle.
+- `Sider` (200px) + `Menu` con 6 voci: Dashboard, Devices, Map, Timeline, Capture, Settings.
+- `Content` renderizza il tab attivo. `DetailPanel` come Drawer laterale.
+- Tema salvato via stato React `dark` (default `true`).
 
-#### `style.css` (~271 lines) — identico alla v2.
+#### `components/DashboardTab.tsx` (~60 lines)
+- 6 `Statistic` card Ant Design: Total Devices, Active (60s), Unique IDs, Packets (60s), Total Packets, Session Pkts.
+- Bottone Recording (Start/Stop), Reset, Export CSV/KML/JSON.
+
+#### `components/DevicesTab.tsx` (~80 lines)
+- `Table` Ant Design con 8 colonne (MAC, Basic ID, Operator, Type, Position, Packets, RSSI, Last Seen).
+- Sorting su packets/lastSeen. `sorter` per colonne numeriche.
+- `onRow` click → `selectDevice(mac)` → apre DetailPanel.
+
+#### `components/MapTab.tsx` (~55 lines)
+- `MapContainer` react-leaflet. Centrato su Italia (45.5, 9.2), zoom 13.
+- TileLayer: CartoDB dark_all (dark mode) / OpenStreetMap (light mode).
+- Marker per ogni dispositivo con posizione nota. `DivIcon` personalizzato (punto blu 12px).
+- `Popup` con MAC, Basic ID, Operator, Packet count, RSSI.
+- `Polyline` per il trail di ogni dispositivo (fino a 500 punti).
+
+#### `components/TimelineTab.tsx` (~80 lines)
+- Split layout: 14/10 colonne. Sinistra: log testuale monospace con autoscroll. Destra: grafico RSSI `react-chartjs-2`.
+- Filtro MAC a tendina (`Select` Ant Design) per isolare un dispositivo.
+- `Line` chart con punti RSSI nel tempo, colori per-MAC con hash HSL.
+
+#### `components/CaptureTab.tsx` (~90 lines)
+- 3 card affiancate (WiFi, BLE, Serial) con bottoni Start/Stop + stato locale.
+- WiFi: `WifiOutlined` icon, richiede modulo pcap.
+- BLE: `ApiOutlined` icon, richiede @abandonware/noble.
+- Serial: select porta + baud rate + Refresh Ports, richiede serialport.
+- PCAP Import: bottone con dialog per aprire file .pcap/.pcapng.
+- Alert informativo in fondo con stato corrente.
+
+#### `components/DetailPanel.tsx` (~90 lines)
+- `Drawer` Ant Design (420px), si apre su click device.
+- `Descriptions` Ant Design: Basic ID, Operator ID, Self ID, UA Type, Packets, RSSI, First/Last Seen, Position, Speed, Altitude.
+- Tag per messaggi visti, Timeline per location trail.
 
 ### Electron Shell
 
-#### `main.js` (~90 lines)
+#### `main.js` (~170 lines)
 - **Niente Python**: `Tracker`, `WiFiCapture`, `BLECapture`, `SerialCapture` importati direttamente.
 - `ipcMain.handle()` per tutte le operazioni: snapshot, dettaglio, export, recording, capture.
 - `ipcMain.handle('save-file', ...)` usa `dialog.showSaveDialog`.
-- `ipcMain.handle('import-pcap', ...)` usa `dialog.showOpenDialog`.
+- `ipcMain.handle('import-pcap', ...)` usa `dialog.showOpenDialog` + pcap offline parser.
+- Carica il renderer: `process.env.VITE_DEV_SERVER_URL` (dev) o `dist/renderer/index.html` (prod).
 
 #### `preload.js` (~40 lines)
 - Espone `window.RID` via contextBridge con tutti i canali IPC.
@@ -456,10 +504,24 @@ RID_Hub/
   `startBLE`, `stopBLE`, `importPcap`.
 - Eventi: `onPacket`, `onPcapDone`.
 
-#### `package.json` (~35 lines)
+#### `package.json` (~60 lines)
+- `main`: `"dist-electron/main.js"` — puntato al built main process.
+- Scripts: `dev` (vite dev), `build` (vite build), `start` (build + electron).
 - Dipendenze: `serialport` (obbligatoria), `pcap` e `@abandonware/noble` (opzionali).
-- DevDependencies: `electron`, `electron-builder`.
+- DevDependencies: `electron`, `electron-builder`, `vite`, `vite-plugin-electron`,
+  `react`, `react-dom`, `antd`, `@ant-design/icons`, `react-leaflet`, `leaflet`,
+  `chart.js`, `react-chartjs-2`, `typescript`, `@types/react`, `@types/leaflet`.
 - Build: Windows (NSIS), macOS (DMG), Linux (AppImage).
+
+#### `vite.config.ts` (~35 lines)
+- `vite-plugin-electron`: build `main.js` + `preload.js` in `dist-electron/`.
+- `@vitejs/plugin-react`: JSX transform.
+- `root: renderer/`, `base: ./`, `outDir: dist/renderer/`.
+- Alias `@` → `renderer/src/`.
+
+#### `tsconfig.json` (~20 lines)
+- Target ES2022, `jsx: react-jsx`, strict mode.
+- Paths `@/*` → `renderer/src/*`.
 
 ### Ground Tools Status
 I tool Python (`scanner_wifi_ble.py`, `mesh_mapper.py`, ecc.) erano placeholder.
@@ -631,6 +693,7 @@ Per strumenti avanzati (timing analysis, provisioning NVS, bridge Meshtastic) �
 | Operator-location freshness loop — SYSTEM republish every 6s | ✅ DONE | 2026-06-29 |
 | BLE TX power control — `ble_tx_set_power()` API | ✅ DONE | 2026-06-29 |
 | Ground Tools directory structure in Analyzer (`tools/`) | ✅ DONE | 2026-06-29 |
+| RID Hub UI ported to React 19 + Ant Design 6 + Vite 8 | ✅ DONE | 2026-06-29 |
 | CI green on all 3 targets (esp32/s3/c6) | ✅ DONE | 2026-06-28 |
 | GCC 15.2.0 fixes (led_status.c, cli.c, web_config.c) | ✅ DONE | 2026-06-27 |
 | LEDC PWM LED state machine (7 states) | ✅ DONE | 2026-06-27 |
@@ -971,15 +1034,25 @@ Per strumenti avanzati (timing analysis, provisioning NVS, bridge Meshtastic) �
 | 56 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/src/rid_mavlink_usb.c` | 42 | ✅ |
 | 57 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/webui/config.html` | ~2234 | ✅ |
 | 58-137 | `ESP32_DRONE_REMOTE_ID_Firmware/components/esp_remote_id/mavlink/**/*.h/.xml` | ~80 files | 🔶 many unused |
-| 138 | `RID_Hub/main.js` | ~100 | ✅ (Electron main, IPC nativa) |
-| 139 | `RID_Hub/package.json` | ~35 | ✅ (no Python, Electron-only) |
+| 138 | `RID_Hub/main.js` | ~170 | ✅ (Electron main, IPC nativa, Vite dev/prod) |
+| 139 | `RID_Hub/package.json` | ~60 | ✅ (Electron + React + Ant Design) |
 | 140 | `RID_Hub/preload.js` | ~40 | ✅ (contextBridge IPC) |
-| 141 | `RID_Hub/src/decoder.js` | ~200 | ✅ (ASTM F3411-22a, port da Python) |
-| 142 | `RID_Hub/src/tracker.js` | ~190 | ✅ (RIDDevice tracking, port da Python) |
-| 143 | `RID_Hub/src/capture.js` | ~140 | ✅ (WiFi/BLE/Serial, Node native) |
-| 144 | `RID_Hub/renderer/index.html` | ~200 | ✅ (UI con Capture tab) |
-| 145 | `RID_Hub/renderer/app.js` | ~500 | ✅ (renderer IPC, chart, map) |
-| 146 | `RID_Hub/renderer/style.css` | ~271 | ✅ (dark/light theme) |
+| 141 | `RID_Hub/vite.config.ts` | ~35 | ✅ (Vite 8 + vite-plugin-electron) |
+| 142 | `RID_Hub/tsconfig.json` | ~20 | ✅ (strict, ES2022) |
+| 143 | `RID_Hub/src/decoder.js` | ~200 | ✅ (ASTM F3411-22a, port da Python) |
+| 144 | `RID_Hub/src/tracker.js` | ~190 | ✅ (RIDDevice tracking, port da Python) |
+| 145 | `RID_Hub/src/capture.js` | ~140 | ✅ (WiFi/BLE/Serial, Node native) |
+| 146 | `RID_Hub/renderer/index.html` | ~10 | ✅ (SPA root mount) |
+| 147 | `RID_Hub/renderer/src/main.tsx` | ~10 | ✅ (React 19 entry) |
+| 148 | `RID_Hub/renderer/src/App.tsx` | ~90 | ✅ (Ant Design Layout + Menu) |
+| 149 | `RID_Hub/renderer/src/types/index.ts` | ~80 | ✅ (TypeScript interfaces) |
+| 150 | `RID_Hub/renderer/src/hooks/useRidApi.ts` | ~100 | ✅ (IPC bridge hook) |
+| 151 | `RID_Hub/renderer/src/components/DashboardTab.tsx` | ~60 | ✅ (Stat card + recording) |
+| 152 | `RID_Hub/renderer/src/components/DevicesTab.tsx` | ~80 | ✅ (Ant Table ordinabile) |
+| 153 | `RID_Hub/renderer/src/components/MapTab.tsx` | ~55 | ✅ (react-leaflet, dark tiles) |
+| 154 | `RID_Hub/renderer/src/components/TimelineTab.tsx` | ~80 | ✅ (log + RSSI chart.js) |
+| 155 | `RID_Hub/renderer/src/components/CaptureTab.tsx` | ~90 | ✅ (WiFi/BLE/Serial/PCAP) |
+| 156 | `RID_Hub/renderer/src/components/DetailPanel.tsx` | ~90 | ✅ (Ant Drawer dettaglio) |
 | 147 | ~~`ESP_DRONE_REMOTEID_Analyzer/`~~ | — | ❌ Deleted (old Python Analyzer) |
 | 148 | ~~`.venv_analyzer/`~~ | — | ❌ Deleted (old Python venv) |
 | 162 | `docs/index.html` | ~901 | ✅ (inline, wiki split) |

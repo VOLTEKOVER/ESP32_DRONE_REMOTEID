@@ -1,11 +1,10 @@
 {
   "name": "rid-hub",
   "version": "1.0.0",
-  "description": "RID Hub — Open DroneID Ground Station (Electron)",
+  "description": "RID Hub — Open DroneID Ground Station",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
     "pack": "electron-builder --dir",
     "dist": "electron-builder"
   },
@@ -13,14 +12,15 @@
     "appId": "com.votekover.rid-hub",
     "productName": "RID Hub",
     "directories": {
-      "output": "dist"
+      "output": "release"
     },
     "files": [
       "main.js",
       "preload.js",
-      "package.json",
+      "index.html",
+      "renderer/**/*",
       "src/**/*",
-      "renderer/**/*"
+      "package.json"
     ],
     "win": {
       "target": [
@@ -36,17 +36,23 @@
       "target": [
         "AppImage"
       ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "VOLTEKOVER",
+      "repo": "ESP_DRONE_REMOTEID"
     }
   },
   "dependencies": {
-    "serialport": "^12.0.0"
+    "electron-updater": "^6.8.9",
+    "serialport": "^13.0.0"
   },
   "optionalDependencies": {
-    "@abandonware/noble": "^1.6.0",
-    "pcap": "^3.0.0"
+    "@abandonware/noble": "^1.9.2",
+    "pcap": "^3.1.0"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^25.0.0"
+    "electron": "^42.5.1",
+    "electron-builder": "^26.15.3"
   }
 }

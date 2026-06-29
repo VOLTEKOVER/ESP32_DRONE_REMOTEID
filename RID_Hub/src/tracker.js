@@ -31,12 +31,15 @@ class RIDDevice {
       packet_count: this.packetCount,
       rssi_avg: this.avgRssi != null ? Math.round(this.avgRssi * 10) / 10 : null,
       rssi_last: this.rssiSamples.length ? this.rssiSamples[this.rssiSamples.length - 1] : null,
+      rssi_min: this.rssiSamples.length ? Math.min(...this.rssiSamples) : null,
+      rssi_max: this.rssiSamples.length ? Math.max(...this.rssiSamples) : null,
       first_seen: this.firstSeen,
       last_seen: this.lastSeen,
       last_location: this.lastLocation,
       last_system: this.lastSystem,
       location_trail: this.locationTrail.slice(-10),
       self_id: this.selfId,
+      messages_seen: [...this.messagesSeen].sort(),
     };
   }
 
